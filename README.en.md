@@ -110,6 +110,10 @@ It stores the interface and translation languages, silent-mode choices, automati
 - When enabled, up to 450 characters of an app description are sent to the public MyMemory translation service.
 - Exported installation lists contain package IDs, names, and sources only; they do not contain a Windows account or device identifier.
 
+## License
+
+This project is licensed under the [MIT License](LICENSE). You may freely use, modify, and distribute it under the license terms.
+
 ## Author
 
 - 廖阿輝
