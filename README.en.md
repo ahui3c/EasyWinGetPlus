@@ -4,6 +4,8 @@
 
 Easy WinGet Plus is a portable graphical software manager for Windows. It uses the built-in Windows Package Manager (Winget) to search, install, update, remove, and back up application lists.
 
+**Free to use, ad-free, and open source.**
+
 Current version: **0.1.0**
 
 ## Features
