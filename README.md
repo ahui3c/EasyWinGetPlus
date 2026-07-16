@@ -4,6 +4,8 @@
 
 Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用系統內建的 Windows Package Manager（Winget）完成程式搜尋、安裝、更新、移除與安裝清單備份。
 
+**完全免費、無廣告，並以開放原始碼方式提供。**
+
 目前版本：**0.1.0**
 
 ## 主要功能
