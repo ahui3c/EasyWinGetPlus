@@ -1,0 +1,12 @@
+# Portable, user-specific settings
+EasyWinGetPlus.settings.json
+
+# Local build and release output
+dist/
+release/
+
+# IDE and operating-system files
+.vs/
+*.user
+Thumbs.db
+.DS_Store

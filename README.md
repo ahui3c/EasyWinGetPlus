@@ -1,0 +1,83 @@
+# Easy WinGet Plus
+
+[English](README.en.md) | **繁體中文**
+
+Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用系統內建的 Windows Package Manager（Winget）完成程式搜尋、安裝、更新、移除與安裝清單備份。
+
+目前版本：**0.1.0**
+
+## 主要功能
+
+- 關鍵字搜尋 Winget 軟體來源、查看說明並安裝
+- 可選擇翻譯軟體說明及指定目標語言
+- 背景掃描 Winget 可識別的已安裝程式與可用更新，操作期間介面不會凍結
+- 勾選程式手動升級，或一鍵升級所有允許自動更新的程式
+- 每個更新項目可設定「不自動更新」：保持顯示且仍可手動升級，一鍵升級時才略過
+- 更新與已安裝程式清單共用隱藏排除清單
+- 即時依名稱、套件識別碼、版本或來源過濾，且不會取消原有勾選狀態
+- 匯出勾選的已安裝程式，並在其他電腦匯入後批次安裝
+- 依序移除所有勾選程式，或透過右鍵選單單獨升級／移除
+- 所有設定儲存在程式旁，可連同整個資料夾攜帶
+- 支援繁體中文與英文介面，第一次啟動時手動選擇
+
+## 系統需求
+
+- Windows 10 1809 或更新版本，或 Windows 11
+- Windows PowerShell 5.1
+- Microsoft App Installer 所提供的 `winget.exe`
+
+Windows 11 通常已包含 Winget。若程式顯示找不到 Winget，請從 Microsoft Store 安裝或更新「應用程式安裝程式」。
+
+## 下載與執行
+
+1. 前往 [Releases](https://github.com/ahui3c/EasyWinGetPlus/releases) 下載 `EasyWinGetPlus.exe`。
+2. 將執行檔放在具有寫入權限的資料夾。
+3. 雙擊執行；第一次啟動時選擇繁體中文或 English。
+
+執行檔未使用商業程式碼簽章。Windows SmartScreen 可能顯示未知發行者提示，請確認下載來源為本儲存庫後再決定是否執行。
+
+## 從原始碼執行
+
+下載或複製儲存庫後，雙擊：
+
+```text
+Start-EasyWinGetPlus.vbs
+```
+
+也可以從 PowerShell 啟動：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File .\EasyWinGetPlus.ps1
+```
+
+## 建置執行檔
+
+建置不需要額外下載套件，使用 Windows 內建的 .NET Framework C# 編譯器：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
+```
+
+輸出位於 `dist\EasyWinGetPlus.exe`。執行檔內嵌完整 PowerShell/WPF 主程式，啟動時不會顯示黑色主控台視窗。
+
+## 可攜式資料
+
+程式會在執行檔或主腳本旁建立：
+
+```text
+EasyWinGetPlus.settings.json
+```
+
+內容包含介面語言、翻譯語言、靜默模式、自動更新略過清單、隱藏排除清單與上次匯出位置。此檔案屬於個人設定，已列入 `.gitignore`。
+
+## 隱私
+
+- 未啟用說明翻譯時，不會呼叫翻譯服務。
+- 啟用翻譯時，最多 450 個字元的軟體說明會傳送到 MyMemory 公開翻譯服務。
+- 匯出的安裝清單只包含套件識別碼、名稱與來源，不包含 Windows 帳號或電腦識別資訊。
+
+## 作者
+
+- 廖阿輝
+- Email：<chehui@gmail.com>
+- Website：[https://ahui3c.com](https://ahui3c.com)
