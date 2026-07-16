@@ -20,6 +20,38 @@ Current version: **0.1.0**
 - Keep all settings beside the program for portable use
 - Traditional Chinese and English interface with a manual first-launch language choice
 
+## Interface preview
+
+### Software updates
+
+Scan for available updates, upgrade checked apps or all eligible apps, add shared hidden exclusions, and use the right-side checkbox to skip an app during automatic upgrades.
+
+![Easy WinGet Plus software updates](軟體畫面/軟體更新.jpg)
+
+### Search, installation, and description translation
+
+Search Winget sources by keyword and select a result to view its description. When translation is enabled, the description is shown in the configured target language.
+
+![Easy WinGet Plus search, installation, and description translation](軟體畫面/搜尋與安裝，支援翻譯.jpg)
+
+### Installed app management
+
+Browse and filter installed apps recognized by Winget, export checked apps, remove them sequentially, manage shared exclusions, or right-click to remove one app.
+
+![Easy WinGet Plus installed app management](軟體畫面/以安裝程式管理.jpg)
+
+### Import and batch installation
+
+Load a previously exported backup, uncheck unwanted entries, and install the remaining apps in sequence—useful for setting up a new PC or sharing an app collection.
+
+![Easy WinGet Plus import and batch installation](軟體畫面/匯入安裝.jpg)
+
+### Portable settings
+
+Switch the interface language, configure silent installation and updates, enable description translation, and manage exclusions shared by both lists. Changes are saved automatically.
+
+![Easy WinGet Plus settings](軟體畫面/設定.jpg)
+
 ## Requirements
 
 - Windows 10 version 1809 or later, or Windows 11
