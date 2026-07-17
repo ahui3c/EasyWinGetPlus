@@ -6,7 +6,16 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.0**
+Current version: **0.1.2**
+
+## What's new in 0.1.2
+
+- Run installation, update, and removal tasks in the background with Winget windows hidden, while retaining an option to show them
+- Show overall progress, completed-item counts, and failure details for single and batch operations
+- Lock related buttons and context-menu actions while a task is running, then restore them on success or failure
+- Automatically rescan the relevant lists after installation, update, or removal completes
+- Improve removal of apps with non-standard package IDs by retrying with the exact app name
+- Allow persistent error messages to be cleared and improve background-task feedback and reliability
 
 ## Features
 
@@ -19,6 +28,8 @@ Current version: **0.1.0**
 - Filter lists by name, package ID, version, or source without losing checked selections
 - Export selected installed apps and import the list for batch installation on another PC
 - Remove checked apps sequentially, or right-click to upgrade or remove one app
+- Show overall progress for installation, update, and removal while locking related actions to prevent duplicate execution
+- Automatically rescan update and installed-app lists after tasks finish
 - Keep all settings beside the program for portable use
 - Traditional Chinese and English interface with a manual first-launch language choice
 
