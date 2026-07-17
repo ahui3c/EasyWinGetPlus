@@ -1,5 +1,25 @@
 # Changelog / 更新紀錄
 
+## 0.1.2 — 2026-07-18
+
+Background task feedback and operation-safety update / 背景作業回饋與操作安全更新
+
+- Optional hidden-window execution for installation and updates, matching the removal workflow
+- Overall progress for single and batch installation, update, and removal operations
+- Automatic action locking for buttons and context-menu commands while a task is active
+- Automatic list rescanning after installation, update, and removal completes
+- More reliable removal with exact-name fallback when package-ID removal fails
+- Clearable error status and improved bilingual task feedback
+
+---
+
+- 安裝與更新可選擇隱藏執行視窗，操作方式與移除流程一致
+- 單一及批次安裝、更新、移除皆顯示整體進度
+- 工作執行期間自動鎖定相關按鈕與右鍵功能，避免重複操作
+- 安裝、更新與移除完成後自動重新掃描相關清單
+- 套件識別碼移除失敗時改用程式名稱重試，提高移除成功率
+- 移除失敗訊息可清除，並改善中英文背景作業回饋
+
 ## 0.1.0 — 2026-07-17
 
 Initial public release / 首次公開版本
