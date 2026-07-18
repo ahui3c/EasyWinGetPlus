@@ -1,5 +1,27 @@
 # Changelog / 更新紀錄
 
+## 0.1.3 — 2026-07-18
+
+Single-instance, interaction guidance, and interface-contrast update / 單一執行、互動提醒與介面對比更新
+
+- Single-instance guards for both the packaged executable and direct PowerShell launch
+- Update and removal reminders when a separate installer or uninstaller may require manual interaction
+- Dedicated scrollable error-report window for installation and update failures
+- More prominent Upgrade all primary action
+- Custom high-contrast selected-tab template without hover color changes
+- Correct settings-page text inheritance and tighter section spacing
+- Expanded smoke coverage for startup guards and WPF XAML loading
+
+---
+
+- EXE 與直接執行 PowerShell 版本皆加入單一執行個體保護
+- 更新與移除可能需要操作獨立視窗時，開始前主動提醒
+- 安裝與更新失敗改用可捲動的獨立錯誤報告視窗
+- 強化「一鍵全部升級」主要操作的尺寸與視覺層級
+- 使用自訂高對比頁籤範本，並取消游標滑入變色
+- 修正設定頁文字顏色繼承並縮減區塊間距
+- 增加啟動保護與 WPF XAML 載入測試
+
 ## 0.1.2 — 2026-07-18
 
 Background task feedback and operation-safety update / 背景作業回饋與操作安全更新
