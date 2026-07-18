@@ -9,7 +9,7 @@ $definitions = @($ast.FindAll({
     param($node)
     $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
 }, $true))
-foreach ($name in @('Get-DefaultSettings','Set-OverallProgress','Set-PackageActionControlsEnabled','Begin-PackageAction','End-PackageAction','Start-WingetAction','Start-WingetActionQueue','Start-NextWingetActionQueue','Format-UninstallError')) {
+foreach ($name in @('Get-DefaultSettings','Set-OverallProgress','Set-PackageActionControlsEnabled','Begin-PackageAction','End-PackageAction','Show-ExternalActionNotice','Show-ActionErrorReport','Start-WingetAction','Start-WingetActionQueue','Start-NextWingetActionQueue','Format-UninstallError')) {
     $definition = $definitions | Where-Object Name -eq $name | Select-Object -First 1
     if (-not $definition) { throw "Missing function: $name" }
     . ([scriptblock]::Create($definition.Extent.Text))
@@ -29,11 +29,14 @@ function Get-UiText {
         'ActionQueueSummary' { "summary $($Values[0])/$($Values[1])" }
         'OverallProgress' { "overall $($Values[0])/$($Values[1]) $($Values[2])" }
         'OperationFailed' { "failed $($Values[0]): $($Values[1])" }
+        'ActionFinishedWithErrors' { 'finished with errors' }
         default { $Key }
     }
 }
 function Set-Status { param([string]$Message, [bool]$IsError = $false) $script:LastStatus = $Message }
 function Show-Error { param([string]$Message) $script:LastError = $Message }
+function Show-ActionErrorReport { param([string]$Message) $script:LastActionErrorReport = $Message }
+function Show-ExternalActionNotice { param([string]$ActionKind) [void]$script:ActionNotices.Add($ActionKind) }
 function Invoke-ActionRefresh { param([string]$RefreshAfter) $script:LastRefreshAfter = $RefreshAfter }
 
 $defaults = Get-DefaultSettings
@@ -42,6 +45,7 @@ Assert-True ([bool]$defaults.HideActionWindows) 'Action windows should be hidden
 $script:Winget = 'mock-winget'
 $script:Settings = [pscustomobject]@{ HideActionWindows = $true }
 $script:QueryCalls = 0
+$script:ActionNotices = [System.Collections.Generic.List[string]]::new()
 $script:LastShowWindow = $null
 $script:ActionProgressPanel = [pscustomobject]@{ Visibility = 'Collapsed' }
 $script:ActionProgressText = [pscustomobject]@{ Text = '' }
@@ -66,10 +70,12 @@ Assert-True ($script:ActionProgressBar.Value -eq 1) 'Single-action progress did 
 Assert-True ($script:LastRefreshAfter -eq 'Installed') 'Single install did not request an installed-list refresh.'
 Assert-True $script:ControlsLockedDuringQuery 'Action controls were not locked while the task was running.'
 Assert-True $script:InstallButton.IsEnabled 'Action controls were not restored after completion.'
+Assert-True ($script:ActionNotices.Count -eq 0) 'Install unexpectedly displayed the update reminder.'
 
 $script:Settings.HideActionWindows = $false
 Start-WingetAction @('upgrade','--id','Example.App') 'upgrade Example'
 Assert-True $script:LastShowWindow 'Visible mode did not request a normal process window.'
+Assert-True ($script:ActionNotices.Count -eq 1 -and $script:ActionNotices[0] -eq 'Upgrade') 'Update reminder was not displayed once before the update.'
 
 $script:Settings.HideActionWindows = $true
 $script:QueryCalls = 0
@@ -83,17 +89,19 @@ Assert-True ($script:LastStatus -eq 'summary 2/0') 'Hidden batch action summary 
 Assert-True ($script:ActionProgressBar.Value -eq 2) 'Batch progress did not reach the total count.'
 Assert-True ($script:ActionProgressText.Text -match 'overall 2/2') 'Batch progress text is incorrect.'
 Assert-True ($script:LastRefreshAfter -eq 'Both') 'Batch update did not request both list refreshes.'
+Assert-True ($script:ActionNotices.Count -eq 1) 'Batch installation unexpectedly displayed the update reminder.'
 
 # A failed action must also restore every locked control.
 function Start-WingetQuery {
     param($Arguments, $Activity, $OnSuccess, $OnFailure, $State, [switch]$ShowWindow)
     & $OnFailure 'simulated failure' $State
 }
-$script:LastError = ''
+$script:LastActionErrorReport = ''
 Start-WingetAction @('upgrade','--id','Failing.App') 'upgrade Failing'
 Assert-True (-not $script:ActionInProgress) 'Failed action left the global action lock enabled.'
 Assert-True $script:UpgradeAllButton.IsEnabled 'Failed action did not restore update controls.'
-Assert-True ($script:LastError -match 'simulated failure') 'Failed action did not report its error.'
+Assert-True ($script:LastActionErrorReport -match 'simulated failure') 'Failed action did not show the error report window.'
+Assert-True ($script:LastStatus -eq 'finished with errors') 'Failed action left the full error message in the bottom status area.'
 
 # A second action cannot begin until the active action is ended.
 Assert-True (Begin-PackageAction) 'Could not begin an action from the idle state.'

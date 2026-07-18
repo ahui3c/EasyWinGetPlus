@@ -6,16 +6,16 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.2**
+Current version: **0.1.3**
 
-## What's new in 0.1.2
+## What's new in 0.1.3
 
-- Run installation, update, and removal tasks in the background with Winget windows hidden, while retaining an option to show them
-- Show overall progress, completed-item counts, and failure details for single and batch operations
-- Lock related buttons and context-menu actions while a task is running, then restore them on success or failure
-- Automatically rescan the relevant lists after installation, update, or removal completes
-- Improve removal of apps with non-standard package IDs by retrying with the exact app name
-- Allow persistent error messages to be cleared and improve background-task feedback and reliability
+- Prevent duplicate application windows with single-instance startup protection
+- Warn before updates and removals that a separate installer or uninstaller window may require manual interaction
+- Show installation and update failures in a dedicated, scrollable error-report window with a Close button
+- Enlarge and visually emphasize the primary Upgrade all button
+- Redesign selected-tab styling for clearer active-state and content contrast
+- Fix inherited heading colors and reduce excess spacing on the Settings page
 
 ## Features
 
@@ -30,6 +30,8 @@ Current version: **0.1.2**
 - Remove checked apps sequentially, or right-click to upgrade or remove one app
 - Show overall progress for installation, update, and removal while locking related actions to prevent duplicate execution
 - Automatically rescan update and installed-app lists after tasks finish
+- Prevent multiple main windows and warn when an update or removal may require user interaction
+- Show installation and update failures in a dedicated, scrollable, closable error-report window
 - Keep all settings beside the program for portable use
 - Traditional Chinese and English interface with a manual first-launch language choice
 

@@ -7,6 +7,24 @@ Settings and exclusions use a portable JSON file beside this script.
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
+$script:AppName = 'Easy WinGet Plus'
+$singleInstanceCreated = $false
+$script:SingleInstanceMutex = [System.Threading.Mutex]::new(
+    $true,
+    'Local\EasyWinGetPlus.AppInstance.8F5276E2',
+    [ref]$singleInstanceCreated
+)
+if (-not $singleInstanceCreated) {
+    [System.Windows.MessageBox]::Show(
+        "Easy WinGet Plus 已經在執行中，無法重複開啟。`n`nEasy WinGet Plus is already running and cannot be opened again.",
+        $script:AppName,
+        'OK',
+        'Information'
+    ) | Out-Null
+    $script:SingleInstanceMutex.Dispose()
+    return
+}
+
 # A wide host buffer keeps long package identifiers from being truncated in
 # winget's table output. This is unavailable in some hidden/non-console hosts.
 try {
@@ -14,8 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppName = 'Easy WinGet Plus'
-$script:AppVersion = '0.1.2'
+$script:AppVersion = '0.1.3'
 $script:DataDirectory = if ($env:EASYWINGETPLUS_HOME) { $env:EASYWINGETPLUS_HOME } else { $PSScriptRoot }
 $script:SettingsPath = Join-Path $script:DataDirectory 'EasyWinGetPlus.settings.json'
 $script:LegacySettingsPath = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'settings.json'
@@ -49,7 +66,7 @@ $script:Translations = @{
         SelectExclude='請先勾選或反白要排除的程式。'; ExcludedCount='已排除並隱藏 {0} 個程式；自動更新將略過這些項目。'; NoExclusions='目前沒有任何排除項目。'; ClearConfirm='確定要清除所有排除與隱藏設定嗎？清除後將重新掃描清單。'; ClearStarted='所有排除設定已清除，正在重新掃描清單…'
         SelectBackup='請先勾選要備份的程式。'; ExportTitle='匯出安裝清單'; ExportedCount='已匯出 {0} 個程式。'; ImportTitle='匯入安裝清單'; InvalidList='這不是有效的 Easy WinGet Plus 安裝清單。'; ImportLoaded='{0} 個程式已載入'; ImportReady='安裝清單已載入；可取消不需要的項目後批次安裝。'; NoImportSelected='清單中沒有勾選的程式。'; BatchInstallStarted='已啟動 {0} 個程式的批次安裝。'
         SelectRemove='請先勾選要移除的程式。'; RemoveConfirm="將依序移除 {0} 個程式：`n`n{1}`n`n確定繼續嗎？"; SequentialRemoveStarted='正在依序移除 {0} 個程式；完成後會自動重新掃描。'; SelectInstall='請先選取要安裝的程式。'; SelectUpgrade='請先勾選要升級的程式。'; NoAutoUpgrade='沒有可自動升級的程式。'; UpgradesStarted='已啟動 {0} 個程式的升級，並略過排除項目。'; RightClickApp='請先在程式項目上按滑鼠右鍵。'; RemoveOneConfirm='確定要單獨移除 {0}？'; InstallActivity='安裝 {0}'; UpgradeActivity='升級 {0}'; RemoveActivity='移除 {0}'; LoadingAppDescription='正在載入 {0} 的說明…'; DescriptionFailed='無法載入說明：{0}'
-        MoreApps='…以及其他 {0} 個程式'; SequentialWindowTitle='Easy WinGet Plus - 依序移除程式'; RemovingStep='[{0}/{1}] 正在移除：{2}'; RemoveFailedContinue='移除失敗，繼續下一個項目。'; RemoveDone='移除完成。'; AllRemoveDone='所有移除工作已處理完成，可以關閉此視窗。'; PressEnter='按 Enter 關閉'; RetryingRemoveByName='無法依套件識別碼移除，正在改用程式名稱重試：{0}'; RemoveSummary='移除完成：成功 {0} 個，失敗 {1} 個。'; RemoveFailedDetails="無法移除 {0}。`n`nWinget 回報：`n{1}"; SingleRemoveDone='{0} 已完成移除，正在重新掃描清單。'; ActionComplete='{0}已完成。'; ActionQueueProgress='[{0}/{1}] {2}'; ActionQueueSummary='工作完成：成功 {0} 個，失敗 {1} 個。'; OverallProgress='整體進度：{0} / {1}　{2}'; ActionBusy='目前已有安裝、更新或移除工作正在執行，請等待完成。'; OperationFailed="{0}失敗。`n{1}"; OperationError='{0}失敗：{1}'
+        MoreApps='…以及其他 {0} 個程式'; SequentialWindowTitle='Easy WinGet Plus - 依序移除程式'; RemovingStep='[{0}/{1}] 正在移除：{2}'; RemoveFailedContinue='移除失敗，繼續下一個項目。'; RemoveDone='移除完成。'; AllRemoveDone='所有移除工作已處理完成，可以關閉此視窗。'; PressEnter='按 Enter 關閉'; RetryingRemoveByName='無法依套件識別碼移除，正在改用程式名稱重試：{0}'; RemoveSummary='移除完成：成功 {0} 個，失敗 {1} 個。'; RemoveFailedDetails="無法移除 {0}。`n`nWinget 回報：`n{1}"; SingleRemoveDone='{0} 已完成移除，正在重新掃描清單。'; ActionComplete='{0}已完成。'; ActionQueueProgress='[{0}/{1}] {2}'; ActionQueueSummary='工作完成：成功 {0} 個，失敗 {1} 個。'; OverallProgress='整體進度：{0} / {1}　{2}'; ActionBusy='目前已有安裝、更新或移除工作正在執行，請等待完成。'; ActionNoticeTitle='操作提醒'; UpgradeExternalNotice="更新過程中，部分程式可能會另外開啟安裝或更新視窗。`n`n若畫面出現，請依照視窗提示手動完成後續操作。"; UninstallExternalNotice="移除過程中，部分程式可能會另外開啟解除安裝視窗。`n`n若畫面出現，請依照視窗提示手動完成後續操作。"; ActionFinishedWithErrors='工作已完成，但有部分項目發生錯誤。'; ErrorReportTitle='安裝 / 更新錯誤訊息報告'; OperationFailed="{0}失敗。`n{1}"; OperationError='{0}失敗：{1}'
     }
     'en' = @{
         Subtitle='A simple, transparent Windows software manager'; Version='Version {0}'; About='About'; Close='Close'; WingetAvailable='● Winget available'; WingetMissing='● Winget not found'
@@ -71,7 +88,7 @@ $script:Translations = @{
         SelectExclude='Check or highlight an app to exclude first.'; ExcludedCount='{0} apps were excluded and hidden; automatic upgrades will skip them.'; NoExclusions='There are no excluded apps.'; ClearConfirm='Clear all exclusion and hidden-app settings? The lists will be scanned again.'; ClearStarted='All exclusions were cleared. Scanning the lists again…'
         SelectBackup='Check the apps to back up first.'; ExportTitle='Export installation list'; ExportedCount='Exported {0} apps.'; ImportTitle='Import installation list'; InvalidList='This is not a valid Easy WinGet Plus installation list.'; ImportLoaded='{0} apps loaded'; ImportReady='The installation list is loaded. Uncheck unwanted apps, then start batch installation.'; NoImportSelected='No apps are checked in the list.'; BatchInstallStarted='Batch installation started for {0} apps.'
         SelectRemove='Check the apps to remove first.'; RemoveConfirm="Remove {0} apps in order?`n`n{1}`n`nContinue?"; SequentialRemoveStarted='Removing {0} apps in order. The lists will be scanned again when finished.'; SelectInstall='Select an app to install first.'; SelectUpgrade='Check the apps to upgrade first.'; NoAutoUpgrade='There are no apps available for automatic upgrade.'; UpgradesStarted='Started upgrading {0} apps and skipped exclusions.'; RightClickApp='Right-click an app first.'; RemoveOneConfirm='Remove {0}?'; InstallActivity='Installing {0}'; UpgradeActivity='Upgrading {0}'; RemoveActivity='Removing {0}'; LoadingAppDescription='Loading the description for {0}…'; DescriptionFailed='Could not load the description: {0}'
-        MoreApps='…and {0} more apps'; SequentialWindowTitle='Easy WinGet Plus - Sequential Removal'; RemovingStep='[{0}/{1}] Removing: {2}'; RemoveFailedContinue='Removal failed; continuing to the next app.'; RemoveDone='Removal complete.'; AllRemoveDone='All removal tasks have been processed. You can close this window.'; PressEnter='Press Enter to close'; RetryingRemoveByName='Could not remove by package ID. Retrying by app name: {0}'; RemoveSummary='Removal finished: {0} succeeded, {1} failed.'; RemoveFailedDetails="Could not remove {0}.`n`nWinget reported:`n{1}"; SingleRemoveDone='{0} was removed. Scanning the lists again.'; ActionComplete='{0} completed.'; ActionQueueProgress='[{0}/{1}] {2}'; ActionQueueSummary='Tasks finished: {0} succeeded, {1} failed.'; OverallProgress='Overall progress: {0} / {1}  {2}'; ActionBusy='An installation, update, or removal task is already running. Wait for it to finish.'; OperationFailed="{0} failed.`n{1}"; OperationError='{0} failed: {1}'
+        MoreApps='…and {0} more apps'; SequentialWindowTitle='Easy WinGet Plus - Sequential Removal'; RemovingStep='[{0}/{1}] Removing: {2}'; RemoveFailedContinue='Removal failed; continuing to the next app.'; RemoveDone='Removal complete.'; AllRemoveDone='All removal tasks have been processed. You can close this window.'; PressEnter='Press Enter to close'; RetryingRemoveByName='Could not remove by package ID. Retrying by app name: {0}'; RemoveSummary='Removal finished: {0} succeeded, {1} failed.'; RemoveFailedDetails="Could not remove {0}.`n`nWinget reported:`n{1}"; SingleRemoveDone='{0} was removed. Scanning the lists again.'; ActionComplete='{0} completed.'; ActionQueueProgress='[{0}/{1}] {2}'; ActionQueueSummary='Tasks finished: {0} succeeded, {1} failed.'; OverallProgress='Overall progress: {0} / {1}  {2}'; ActionBusy='An installation, update, or removal task is already running. Wait for it to finish.'; ActionNoticeTitle='Action reminder'; UpgradeExternalNotice="Some apps may open a separate installer or update window during the update.`n`nIf a window appears, follow its prompts to complete the operation manually."; UninstallExternalNotice="Some apps may open a separate uninstaller window during removal.`n`nIf a window appears, follow its prompts to complete the operation manually."; ActionFinishedWithErrors='The task finished, but some items reported errors.'; ErrorReportTitle='Installation / Update Error Report'; OperationFailed="{0} failed.`n{1}"; OperationError='{0} failed: {1}'
     }
 }
 
@@ -570,6 +587,87 @@ function Show-Error {
     [System.Windows.MessageBox]::Show($script:Window, $Message, $script:AppName, 'OK', 'Error') | Out-Null
 }
 
+function Show-ExternalActionNotice {
+    param([Parameter(Mandatory)][ValidateSet('Upgrade','Uninstall')][string]$ActionKind)
+    $messageKey = if ($ActionKind -eq 'Upgrade') { 'UpgradeExternalNotice' } else { 'UninstallExternalNotice' }
+    [System.Windows.MessageBox]::Show(
+        $script:Window,
+        (Get-UiText $messageKey),
+        (Get-UiText 'ActionNoticeTitle'),
+        'OK',
+        'Information'
+    ) | Out-Null
+}
+
+function Show-ActionErrorReport {
+    param([Parameter(Mandatory)][string]$Message)
+
+    $reportWindow = [System.Windows.Window]::new()
+    $reportWindow.Title = Get-UiText 'ErrorReportTitle'
+    $reportWindow.Width = 720
+    $reportWindow.Height = 480
+    $reportWindow.MinWidth = 520
+    $reportWindow.MinHeight = 340
+    $reportWindow.WindowStartupLocation = 'CenterOwner'
+    $reportWindow.Background = '#FF0B1120'
+    $reportWindow.Foreground = '#FFE5E7EB'
+    $reportWindow.FontFamily = 'Segoe UI'
+    $reportWindow.ShowInTaskbar = $false
+    if ($script:Window) { $reportWindow.Owner = $script:Window }
+
+    $layout = [System.Windows.Controls.Grid]::new()
+    $layout.Margin = 24
+    [void]$layout.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
+    $layout.RowDefinitions[0].Height = 'Auto'
+    [void]$layout.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
+    $layout.RowDefinitions[1].Height = '*'
+    [void]$layout.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
+    $layout.RowDefinitions[2].Height = 'Auto'
+
+    $heading = [System.Windows.Controls.TextBlock]::new()
+    $heading.Text = Get-UiText 'ErrorReportTitle'
+    $heading.FontSize = 22
+    $heading.FontWeight = 'Bold'
+    $heading.Margin = '0,0,0,16'
+    [System.Windows.Controls.Grid]::SetRow($heading, 0)
+    [void]$layout.Children.Add($heading)
+
+    $details = [System.Windows.Controls.TextBox]::new()
+    $details.Text = $Message
+    $details.IsReadOnly = $true
+    $details.AcceptsReturn = $true
+    $details.TextWrapping = 'Wrap'
+    $details.VerticalScrollBarVisibility = 'Auto'
+    $details.HorizontalScrollBarVisibility = 'Disabled'
+    $details.Background = '#FF111827'
+    $details.Foreground = '#FFFCA5A5'
+    $details.BorderBrush = '#FF334155'
+    $details.BorderThickness = 1
+    $details.Padding = 14
+    $details.FontFamily = 'Consolas'
+    $details.FontSize = 13
+    [System.Windows.Controls.Grid]::SetRow($details, 1)
+    [void]$layout.Children.Add($details)
+
+    $closeButton = [System.Windows.Controls.Button]::new()
+    $closeButton.Content = Get-UiText 'Close'
+    $closeButton.MinWidth = 100
+    $closeButton.Padding = '18,8'
+    $closeButton.Margin = '0,16,0,0'
+    $closeButton.HorizontalAlignment = 'Right'
+    $closeButton.Background = '#FF334155'
+    $closeButton.Foreground = '#FFFFFFFF'
+    $closeButton.IsDefault = $true
+    $closeButton.IsCancel = $true
+    $closeButton.Add_Click({ $reportWindow.Close() })
+    [System.Windows.Controls.Grid]::SetRow($closeButton, 2)
+    [void]$layout.Children.Add($closeButton)
+
+    $reportWindow.Content = $layout
+    $reportWindow.Add_ContentRendered({ $closeButton.Focus() | Out-Null })
+    $reportWindow.ShowDialog() | Out-Null
+}
+
 function Get-PackageDescriptionFromLines {
     param([string[]]$Lines)
     $description = ''
@@ -610,6 +708,7 @@ function Start-WingetAction {
     )
     if (-not $script:Winget) { Show-Error (Get-UiText 'WingetRequired'); return }
     if (-not (Begin-PackageAction)) { return }
+    if ($Arguments.Count -and $Arguments[0] -eq 'upgrade') { Show-ExternalActionNotice Upgrade }
     $actionState = [pscustomobject]@{ Activity = $Activity; RefreshAfter = $RefreshAfter }
     Set-OverallProgress 0 1 $Activity $true
     $success = {
@@ -623,7 +722,8 @@ function Start-WingetAction {
         param($message, $state)
         Set-OverallProgress 1 1 $state.Activity $false
         End-PackageAction
-        Show-Error (Get-UiText 'OperationFailed' @($state.Activity, $message))
+        Set-Status (Get-UiText 'ActionFinishedWithErrors')
+        Show-ActionErrorReport (Get-UiText 'OperationFailed' @($state.Activity, $message))
     }
     Start-WingetQuery -Arguments $Arguments -Activity $Activity -OnSuccess $success -OnFailure $failure -State $actionState -ShowWindow:(-not [bool]$script:Settings.HideActionWindows)
 }
@@ -637,7 +737,8 @@ function Start-NextWingetActionQueue {
         if ($QueueState.Failures.Count) {
             $details = @($QueueState.Failures | Select-Object -First 8) -join "`n`n"
             if ($QueueState.Failures.Count -gt 8) { $details += "`n`n" + (Get-UiText 'MoreApps' @(($QueueState.Failures.Count - 8))) }
-            Show-Error "$summary`n`n$details"
+            Set-Status (Get-UiText 'ActionFinishedWithErrors')
+            Show-ActionErrorReport "$summary`n`n$details"
         } else {
             Set-Status $summary
         }
@@ -673,6 +774,7 @@ function Start-WingetActionQueue {
     if (-not $Jobs.Count) { return }
     if (-not $script:Winget) { Show-Error (Get-UiText 'WingetRequired'); return }
     if (-not (Begin-PackageAction)) { return }
+    if ($Jobs[0].Arguments.Count -and $Jobs[0].Arguments[0] -eq 'upgrade') { Show-ExternalActionNotice Upgrade }
     $queueState = [pscustomobject]@{
         Jobs = $Jobs
         Index = 0
@@ -770,6 +872,7 @@ function Start-SinglePackageUninstall {
     param([Parameter(Mandatory)]$Package)
     if (-not $script:Winget) { Show-Error (Get-UiText 'WingetRequired'); return }
     if (-not (Begin-PackageAction)) { return }
+    Show-ExternalActionNotice Uninstall
     $singleState = [pscustomobject]@{ Package = $Package }
     Set-OverallProgress 0 1 (Get-UiText 'RemoveActivity' @($Package.Name)) $true
     $complete = {
@@ -983,6 +1086,7 @@ function Start-SequentialUninstall {
     if ($answer -ne 'Yes') { return }
     if (-not $script:Winget) { Show-Error (Get-UiText 'WingetRequired'); return }
     if (-not (Begin-PackageAction)) { return }
+    Show-ExternalActionNotice Uninstall
 
     $queueState = [pscustomobject]@{
         Packages = @($Packages)
@@ -1014,7 +1118,22 @@ $script:Winget = Find-Winget
     <Style TargetType="CheckBox"><Setter Property="Foreground" Value="#E5E7EB"/><Setter Property="Margin" Value="4"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
     <Style TargetType="DataGrid"><Setter Property="Background" Value="#111827"/><Setter Property="Foreground" Value="#E5E7EB"/><Setter Property="RowBackground" Value="#111827"/><Setter Property="AlternatingRowBackground" Value="#172033"/><Setter Property="HorizontalGridLinesBrush" Value="#243244"/><Setter Property="VerticalGridLinesBrush" Value="#243244"/><Setter Property="BorderBrush" Value="#334155"/><Setter Property="HeadersVisibility" Value="Column"/><Setter Property="CanUserAddRows" Value="False"/><Setter Property="AutoGenerateColumns" Value="False"/><Setter Property="SelectionMode" Value="Single"/><Setter Property="SelectionUnit" Value="FullRow"/></Style>
     <Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#1E293B"/><Setter Property="Foreground" Value="#CBD5E1"/><Setter Property="Padding" Value="8"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
-    <Style TargetType="TabItem"><Setter Property="Foreground" Value="#CBD5E1"/><Setter Property="Background" Value="#111827"/><Setter Property="Padding" Value="20,11"/><Setter Property="FontSize" Value="14"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style TargetType="TabItem">
+      <Setter Property="Foreground" Value="#E2E8F0"/><Setter Property="Background" Value="#111827"/><Setter Property="BorderBrush" Value="#475569"/><Setter Property="Padding" Value="20,11"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabItem">
+            <Border x:Name="TabBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0" Padding="{TemplateBinding Padding}" Margin="0,0,1,0" TextElement.Foreground="#E2E8F0" TextElement.FontSize="14" TextElement.FontWeight="SemiBold">
+              <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="#FBBF24"/><Setter TargetName="TabBorder" Property="BorderBrush" Value="#FDE68A"/><Setter TargetName="TabBorder" Property="TextElement.Foreground" Value="#0F172A"/><Setter TargetName="TabBorder" Property="TextElement.FontWeight" Value="Bold"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
   <Grid Margin="20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid Margin="4,0,4,16"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -1036,7 +1155,7 @@ $script:Winget = Find-Winget
     </Popup>
     <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0" Background="#0B1120" BorderBrush="#253047">
       <TabItem Header="{DynamicResource TabUpgrade}"><Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <Grid><TextBlock x:Name="UpgradeCount" Text="{DynamicResource NotScanned}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="RefreshUpgradeButton" Content="{DynamicResource Refresh}"/><Button x:Name="ExcludeUpgradeButton" Content="{DynamicResource AddExclusion}" Background="#7C3AED"/><Button x:Name="UpgradeSelectedButton" Content="{DynamicResource UpgradeSelected}"/><Button x:Name="UpgradeAllButton" Content="{DynamicResource UpgradeAll}" Background="#059669"/></StackPanel></Grid>
+        <Grid><TextBlock x:Name="UpgradeCount" Text="{DynamicResource NotScanned}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><Button x:Name="RefreshUpgradeButton" Content="{DynamicResource Refresh}"/><Button x:Name="ExcludeUpgradeButton" Content="{DynamicResource AddExclusion}" Background="#7C3AED"/><Button x:Name="UpgradeSelectedButton" Content="{DynamicResource UpgradeSelected}"/><Button x:Name="UpgradeAllButton" Content="{DynamicResource UpgradeAll}" MinWidth="190" Height="52" Margin="12,0,4,0" Padding="26,12" FontSize="17" FontWeight="Bold" Background="#10B981" BorderBrush="#6EE7B7" BorderThickness="2"><Button.Effect><DropShadowEffect Color="#10B981" BlurRadius="16" ShadowDepth="0" Opacity="0.6"/></Button.Effect></Button></StackPanel></Grid>
         <Grid Grid.Row="1" Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="320"/><ColumnDefinition/></Grid.ColumnDefinitions><TextBlock Text="{DynamicResource FilterList}" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#CBD5E1"/><TextBox x:Name="UpgradeFilterBox" Grid.Column="1" ToolTip="{DynamicResource FilterTip}"/></Grid>
         <DataGrid x:Name="UpgradeGrid" Grid.Row="2" Margin="0,10"><DataGrid.Columns><DataGridTemplateColumn Header="{DynamicResource Select}" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource CurrentVersion}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn Header="{DynamicResource NewVersion}" Binding="{Binding Available}" Width="*"/><DataGridTemplateColumn Header="{DynamicResource SkipAutoUpgrade}" Width="115"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding SkipAutoUpgrade, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{DynamicResource SkipAutoUpgrade}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn></DataGrid.Columns></DataGrid>
         <TextBlock Grid.Row="3" Text="{DynamicResource UpgradeExclusionHint}" Foreground="#94A3B8"/>
@@ -1058,14 +1177,14 @@ $script:Winget = Find-Winget
         <DataGrid x:Name="ImportGrid" Grid.Row="1" Margin="0,12"><DataGrid.Columns><DataGridCheckBoxColumn Header="{DynamicResource Install}" Binding="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="60"/><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
         <Button x:Name="InstallImportedButton" Grid.Row="2" Content="{DynamicResource InstallChecked}" HorizontalAlignment="Right" Background="#059669"/>
       </Grid></TabItem>
-      <TabItem Header="{DynamicResource TabSettings}"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24" MaxWidth="650" HorizontalAlignment="Left">
+      <TabItem Header="{DynamicResource TabSettings}"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20,16" MaxWidth="650" HorizontalAlignment="Left">
         <TextBlock Text="{DynamicResource InterfaceLanguage}" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/><ComboBox x:Name="InterfaceLanguageCombo" Width="220" HorizontalAlignment="Left"><ComboBoxItem Content="繁體中文" Tag="zh-TW"/><ComboBoxItem Content="English" Tag="en"/></ComboBox><TextBlock Text="{DynamicResource InterfaceLanguageHint}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,8,4,0"/>
-        <Separator Margin="0,18" Background="#334155"/><TextBlock Text="{DynamicResource InstallUpdate}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/><CheckBox x:Name="SilentInstallCheck" Content="{DynamicResource SilentInstall}"/><CheckBox x:Name="SilentUpgradeCheck" Content="{DynamicResource SilentUpgrade}"/><CheckBox x:Name="HideActionWindowsCheck" Content="{DynamicResource HideActionWindows}"/>
-        <Separator Margin="0,18" Background="#334155"/><TextBlock Text="{DynamicResource DescriptionTranslation}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/><CheckBox x:Name="AutoTranslateCheck" Content="{DynamicResource AutoTranslate}"/>
-        <StackPanel Orientation="Horizontal" Margin="4,8"><TextBlock Text="{DynamicResource TargetLanguage}" Width="110" VerticalAlignment="Center"/><ComboBox x:Name="LanguageCombo" Width="220"><ComboBoxItem Content="繁體中文" Tag="zh-TW"/><ComboBoxItem Content="簡體中文" Tag="zh-CN"/><ComboBoxItem Content="日本語" Tag="ja"/><ComboBoxItem Content="한국어" Tag="ko"/><ComboBoxItem Content="English" Tag="en"/></ComboBox></StackPanel>
-        <TextBlock Text="{DynamicResource TranslationPrivacy}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,10"/>
-        <Separator Margin="0,18" Background="#334155"/><TextBlock Text="{DynamicResource SharedExclusions}" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/><TextBlock Text="{DynamicResource ExclusionSettingsHint}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,4,4,8"/><Button x:Name="ClearExclusionsButton" Content="{DynamicResource ClearExclusions}" Background="#DC2626" HorizontalAlignment="Left"/>
-        <Separator Margin="0,18" Background="#334155"/><TextBlock Text="{DynamicResource DataLocation}" FontSize="20" FontWeight="Bold"/><TextBlock x:Name="SettingsPathText" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,10"/>
+        <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource InstallUpdate}" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/><CheckBox x:Name="SilentInstallCheck" Content="{DynamicResource SilentInstall}"/><CheckBox x:Name="SilentUpgradeCheck" Content="{DynamicResource SilentUpgrade}"/><CheckBox x:Name="HideActionWindowsCheck" Content="{DynamicResource HideActionWindows}"/>
+        <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource DescriptionTranslation}" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/><CheckBox x:Name="AutoTranslateCheck" Content="{DynamicResource AutoTranslate}"/>
+        <StackPanel Orientation="Horizontal" Margin="4,6"><TextBlock Text="{DynamicResource TargetLanguage}" Width="110" VerticalAlignment="Center"/><ComboBox x:Name="LanguageCombo" Width="220"><ComboBoxItem Content="繁體中文" Tag="zh-TW"/><ComboBoxItem Content="簡體中文" Tag="zh-CN"/><ComboBoxItem Content="日本語" Tag="ja"/><ComboBoxItem Content="한국어" Tag="ko"/><ComboBoxItem Content="English" Tag="en"/></ComboBox></StackPanel>
+        <TextBlock Text="{DynamicResource TranslationPrivacy}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,6,4,0"/>
+        <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource SharedExclusions}" FontSize="20" FontWeight="Bold" Margin="0,0,0,6"/><TextBlock Text="{DynamicResource ExclusionSettingsHint}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,2,4,6"/><Button x:Name="ClearExclusionsButton" Content="{DynamicResource ClearExclusions}" Background="#DC2626" HorizontalAlignment="Left"/>
+        <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource DataLocation}" FontSize="20" FontWeight="Bold"/><TextBlock x:Name="SettingsPathText" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,6"/>
       </StackPanel></ScrollViewer></TabItem>
     </TabControl>
     <Border Grid.Row="2" Margin="0,12,0,0" Background="#111827" CornerRadius="6" Padding="12,8"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions><TextBlock x:Name="StatusText" Text="{DynamicResource Ready}" Foreground="#A7F3D0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/><Button x:Name="ClearStatusButton" Grid.Column="1" Content="{DynamicResource ClearMessage}" Visibility="Collapsed" Margin="12,0" Padding="12,4" MinWidth="90" Background="#334155"/><ProgressBar x:Name="BusyProgress" Grid.Column="2" Height="5" IsIndeterminate="True" Foreground="#38BDF8" Background="#253047" Visibility="Collapsed"/><StackPanel x:Name="ActionProgressPanel" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,9,0,1" Visibility="Collapsed"><TextBlock x:Name="ActionProgressText" Foreground="#CBD5E1" FontSize="12" TextTrimming="CharacterEllipsis"/><ProgressBar x:Name="ActionProgressBar" Height="10" Margin="0,5,0,0" Minimum="0" Maximum="1" Value="0" Foreground="#22C55E" Background="#253047"/></StackPanel></Grid></Border>
@@ -1291,3 +1410,7 @@ $script:Window.Add_Closing({
 })
 
 $script:Window.ShowDialog() | Out-Null
+if ($script:SingleInstanceMutex) {
+    try { $script:SingleInstanceMutex.ReleaseMutex() } catch { }
+    $script:SingleInstanceMutex.Dispose()
+}
