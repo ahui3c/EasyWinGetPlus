@@ -32,7 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.3'
+$script:AppVersion = '0.1.4'
 $script:DataDirectory = if ($env:EASYWINGETPLUS_HOME) { $env:EASYWINGETPLUS_HOME } else { $PSScriptRoot }
 $script:SettingsPath = Join-Path $script:DataDirectory 'EasyWinGetPlus.settings.json'
 $script:LegacySettingsPath = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'settings.json'
@@ -44,10 +44,11 @@ $script:UpgradeApps = @()
 $script:ImportedApps = @()
 $script:AsyncOperations = [System.Collections.ArrayList]::new()
 $script:ActionInProgress = $false
+$script:ReleaseApiUri = 'https://api.github.com/repos/ahui3c/EasyWinGetPlus/releases/latest'
 
 $script:Translations = @{
     'zh-TW' = @{
-        Subtitle='簡單、透明的 Windows 軟體管理工具'; Version='版本 {0}'; About='關於'; Close='關閉'; WingetAvailable='● Winget 可用'; WingetMissing='● 找不到 Winget'
+        Subtitle='簡單、透明的 Windows 軟體管理工具'; Version='版本 {0}'; About='關於'; Close='關閉'; OnlineUpdate='線上更新'; WingetAvailable='● Winget 可用'; WingetMissing='● 找不到 Winget'
         TabUpgrade='軟體更新'; TabSearch='搜尋與安裝'; TabInstalled='已安裝程式管理'; TabImport='匯入與批次安裝'; TabSettings='設定'
         NotScanned='尚未掃描'; Refresh='重新掃描'; AddExclusion='加入排除項目'; UpgradeSelected='升級選取項目'; UpgradeAll='一鍵全部升級'; FilterList='過濾清單'; FilterTip='輸入名稱、套件識別碼、版本或來源'
         Select='選取'; Name='名稱'; PackageId='套件識別碼'; CurrentVersion='目前版本'; NewVersion='新版本'; VersionColumn='版本'; Source='來源'; SkipAutoUpgrade='不自動更新'
@@ -62,14 +63,14 @@ $script:Translations = @{
         AboutPurpose='使用 Windows 內建 Winget 搜尋、安裝、更新、移除與備份軟體清單。'; Author='作者'; Email='郵件'; Website='網站'; Ready='準備就緒'; ClearMessage='清除訊息'; RemoveSingle='單獨移除此程式'; UpgradeSingle='單獨升級此程式'
         InstalledCount='{0} 個可識別程式'; UpgradeCount='{0} 個可用更新'; FilteredInstalledCount='{0} / {1} 個可識別程式'; FilteredUpgradeCount='{0} / {1} 個可用更新'; ResultsFound='找到 {0} 筆結果。'; SelectForDescription='選取程式即可載入簡介。'; NoResults='找不到符合的程式。'
         BackgroundRunning='{0}（背景執行中，畫面仍可操作）'; ScanningInstalled='正在掃描已安裝程式…'; CheckingUpdates='正在檢查更新…'; ScanComplete='掃描完成，共 {0} 個可識別程式。'; UpdateComplete='更新檢查完成，共 {0} 個更新。'; Searching='正在搜尋「{0}」…'; LoadingDescription='正在背景載入說明，您可以繼續操作其他功能…'; DescriptionLoaded='軟體說明載入完成。'; LanguageChanged='介面語言已切換為繁體中文。'
-        WingetRequired='找不到 winget。請先從 Microsoft Store 安裝「應用程式安裝程式」。'; Translating='正在翻譯軟體說明…'; TranslationUnavailable='翻譯服務暫時無法使用，已顯示原文。'; TranslationComplete='軟體說明翻譯完成。'; ActionStarted='{0} 已啟動；完成後請按重新掃描。'; EnterKeyword='請先輸入搜尋關鍵字。'
+        WingetRequired='找不到 winget。請先從 Microsoft Store 安裝「應用程式安裝程式」。'; Translating='正在翻譯軟體說明…'; TranslationUnavailable='翻譯服務暫時無法使用，已顯示原文。'; TranslationComplete='軟體說明翻譯完成。'; ActionStarted='{0} 已啟動；完成後請按重新掃描。'; EnterKeyword='請先輸入搜尋關鍵字。'; CheckingOnlineUpdate='正在檢查最新公開版本…'; DownloadingOnlineUpdate='正在下載 Easy WinGet Plus {0}…'; AlreadyLatest='目前已是最新公開版本。'; UpdateStarting='新版已下載完成，程式將關閉、更新並自動重新啟動。'; UpdateFailed='線上更新失敗：{0}'; UpdateSourceMode='從原始碼啟動時無法自動替換 EXE，請改用封裝版 EasyWinGetPlus.exe。'; UpdateAssetMissing='最新公開版本沒有可用的 EasyWinGetPlus EXE 或 Windows ZIP。'; UpdateInvalid='下載的更新檔未通過執行檔與版本驗證。'; UpdateUac='目前位置需要系統管理員權限，接下來將顯示 UAC 授權畫面。'
         SelectExclude='請先勾選或反白要排除的程式。'; ExcludedCount='已排除並隱藏 {0} 個程式；自動更新將略過這些項目。'; NoExclusions='目前沒有任何排除項目。'; ClearConfirm='確定要清除所有排除與隱藏設定嗎？清除後將重新掃描清單。'; ClearStarted='所有排除設定已清除，正在重新掃描清單…'
         SelectBackup='請先勾選要備份的程式。'; ExportTitle='匯出安裝清單'; ExportedCount='已匯出 {0} 個程式。'; ImportTitle='匯入安裝清單'; InvalidList='這不是有效的 Easy WinGet Plus 安裝清單。'; ImportLoaded='{0} 個程式已載入'; ImportReady='安裝清單已載入；可取消不需要的項目後批次安裝。'; NoImportSelected='清單中沒有勾選的程式。'; BatchInstallStarted='已啟動 {0} 個程式的批次安裝。'
         SelectRemove='請先勾選要移除的程式。'; RemoveConfirm="將依序移除 {0} 個程式：`n`n{1}`n`n確定繼續嗎？"; SequentialRemoveStarted='正在依序移除 {0} 個程式；完成後會自動重新掃描。'; SelectInstall='請先選取要安裝的程式。'; SelectUpgrade='請先勾選要升級的程式。'; NoAutoUpgrade='沒有可自動升級的程式。'; UpgradesStarted='已啟動 {0} 個程式的升級，並略過排除項目。'; RightClickApp='請先在程式項目上按滑鼠右鍵。'; RemoveOneConfirm='確定要單獨移除 {0}？'; InstallActivity='安裝 {0}'; UpgradeActivity='升級 {0}'; RemoveActivity='移除 {0}'; LoadingAppDescription='正在載入 {0} 的說明…'; DescriptionFailed='無法載入說明：{0}'
         MoreApps='…以及其他 {0} 個程式'; SequentialWindowTitle='Easy WinGet Plus - 依序移除程式'; RemovingStep='[{0}/{1}] 正在移除：{2}'; RemoveFailedContinue='移除失敗，繼續下一個項目。'; RemoveDone='移除完成。'; AllRemoveDone='所有移除工作已處理完成，可以關閉此視窗。'; PressEnter='按 Enter 關閉'; RetryingRemoveByName='無法依套件識別碼移除，正在改用程式名稱重試：{0}'; RemoveSummary='移除完成：成功 {0} 個，失敗 {1} 個。'; RemoveFailedDetails="無法移除 {0}。`n`nWinget 回報：`n{1}"; SingleRemoveDone='{0} 已完成移除，正在重新掃描清單。'; ActionComplete='{0}已完成。'; ActionQueueProgress='[{0}/{1}] {2}'; ActionQueueSummary='工作完成：成功 {0} 個，失敗 {1} 個。'; OverallProgress='整體進度：{0} / {1}　{2}'; ActionBusy='目前已有安裝、更新或移除工作正在執行，請等待完成。'; ActionNoticeTitle='操作提醒'; UpgradeExternalNotice="更新過程中，部分程式可能會另外開啟安裝或更新視窗。`n`n若畫面出現，請依照視窗提示手動完成後續操作。"; UninstallExternalNotice="移除過程中，部分程式可能會另外開啟解除安裝視窗。`n`n若畫面出現，請依照視窗提示手動完成後續操作。"; ActionFinishedWithErrors='工作已完成，但有部分項目發生錯誤。'; ErrorReportTitle='安裝 / 更新錯誤訊息報告'; OperationFailed="{0}失敗。`n{1}"; OperationError='{0}失敗：{1}'
     }
     'en' = @{
-        Subtitle='A simple, transparent Windows software manager'; Version='Version {0}'; About='About'; Close='Close'; WingetAvailable='● Winget available'; WingetMissing='● Winget not found'
+        Subtitle='A simple, transparent Windows software manager'; Version='Version {0}'; About='About'; Close='Close'; OnlineUpdate='Online update'; WingetAvailable='● Winget available'; WingetMissing='● Winget not found'
         TabUpgrade='Updates'; TabSearch='Search & Install'; TabInstalled='Installed Apps'; TabImport='Import & Batch Install'; TabSettings='Settings'
         NotScanned='Not scanned'; Refresh='Refresh'; AddExclusion='Add to exclusions'; UpgradeSelected='Upgrade selected'; UpgradeAll='Upgrade all'; FilterList='Filter'; FilterTip='Filter by name, package ID, version, or source'
         Select='Select'; Name='Name'; PackageId='Package ID'; CurrentVersion='Current version'; NewVersion='New version'; VersionColumn='Version'; Source='Source'; SkipAutoUpgrade='Skip auto update'
@@ -84,7 +85,7 @@ $script:Translations = @{
         AboutPurpose='Use the built-in Windows Winget to search, install, update, remove, and back up app lists.'; Author='Author'; Email='Email'; Website='Website'; Ready='Ready'; ClearMessage='Clear message'; RemoveSingle='Remove this app'; UpgradeSingle='Upgrade this app'
         InstalledCount='{0} recognized apps'; UpgradeCount='{0} available updates'; FilteredInstalledCount='{0} / {1} recognized apps'; FilteredUpgradeCount='{0} / {1} available updates'; ResultsFound='{0} results found.'; SelectForDescription='Select an app to load its description.'; NoResults='No matching apps found.'
         BackgroundRunning='{0} (running in the background; the window remains responsive)'; ScanningInstalled='Scanning installed apps…'; CheckingUpdates='Checking for updates…'; ScanComplete='Scan complete: {0} recognized apps.'; UpdateComplete='Update check complete: {0} updates.'; Searching='Searching for “{0}”…'; LoadingDescription='Loading the description in the background. You can continue using the app…'; DescriptionLoaded='App description loaded.'; LanguageChanged='Interface language changed to English.'
-        WingetRequired='Winget was not found. Install App Installer from the Microsoft Store first.'; Translating='Translating the app description…'; TranslationUnavailable='The translation service is unavailable; showing the original text.'; TranslationComplete='App description translated.'; ActionStarted='{0} started. Refresh the list when it finishes.'; EnterKeyword='Enter a search keyword first.'
+        WingetRequired='Winget was not found. Install App Installer from the Microsoft Store first.'; Translating='Translating the app description…'; TranslationUnavailable='The translation service is unavailable; showing the original text.'; TranslationComplete='App description translated.'; ActionStarted='{0} started. Refresh the list when it finishes.'; EnterKeyword='Enter a search keyword first.'; CheckingOnlineUpdate='Checking the latest public release…'; DownloadingOnlineUpdate='Downloading Easy WinGet Plus {0}…'; AlreadyLatest='You already have the latest public release.'; UpdateStarting='The update is ready. The app will close, update itself, and restart automatically.'; UpdateFailed='Online update failed: {0}'; UpdateSourceMode='Source-mode launch cannot replace an EXE. Run the packaged EasyWinGetPlus.exe instead.'; UpdateAssetMissing='The latest public release has no usable Easy WinGet Plus EXE or Windows ZIP asset.'; UpdateInvalid='The downloaded update did not pass executable and version validation.'; UpdateUac='This location requires administrator permission. A UAC consent prompt will appear next.'
         SelectExclude='Check or highlight an app to exclude first.'; ExcludedCount='{0} apps were excluded and hidden; automatic upgrades will skip them.'; NoExclusions='There are no excluded apps.'; ClearConfirm='Clear all exclusion and hidden-app settings? The lists will be scanned again.'; ClearStarted='All exclusions were cleared. Scanning the lists again…'
         SelectBackup='Check the apps to back up first.'; ExportTitle='Export installation list'; ExportedCount='Exported {0} apps.'; ImportTitle='Import installation list'; InvalidList='This is not a valid Easy WinGet Plus installation list.'; ImportLoaded='{0} apps loaded'; ImportReady='The installation list is loaded. Uncheck unwanted apps, then start batch installation.'; NoImportSelected='No apps are checked in the list.'; BatchInstallStarted='Batch installation started for {0} apps.'
         SelectRemove='Check the apps to remove first.'; RemoveConfirm="Remove {0} apps in order?`n`n{1}`n`nContinue?"; SequentialRemoveStarted='Removing {0} apps in order. The lists will be scanned again when finished.'; SelectInstall='Select an app to install first.'; SelectUpgrade='Check the apps to upgrade first.'; NoAutoUpgrade='There are no apps available for automatic upgrade.'; UpgradesStarted='Started upgrading {0} apps and skipped exclusions.'; RightClickApp='Right-click an app first.'; RemoveOneConfirm='Remove {0}?'; InstallActivity='Installing {0}'; UpgradeActivity='Upgrading {0}'; RemoveActivity='Removing {0}'; LoadingAppDescription='Loading the description for {0}…'; DescriptionFailed='Could not load the description: {0}'
@@ -333,6 +334,288 @@ function Start-TranslationQuery {
     }
 }
 
+function ConvertTo-ReleaseVersion {
+    param([string]$Value)
+    $match = [regex]::Match([string]$Value, '\d+(?:\.\d+){1,3}')
+    if (-not $match.Success) { return $null }
+    try { [version]$match.Value } catch { $null }
+}
+
+function Set-OnlineUpdateIdle {
+    if ($script:OnlineUpdateButton) {
+        $script:OnlineUpdateButton.Content = Get-UiText 'OnlineUpdate'
+        $script:OnlineUpdateButton.IsEnabled = $true
+    }
+}
+
+function Stop-OnlineUpdateWithError {
+    param([string]$Message)
+    Set-OnlineUpdateIdle
+    $localized = Get-UiText 'UpdateFailed' @($Message)
+    Set-Status $localized $true
+    Show-Error $localized
+}
+
+function Test-UpdateTargetWritable {
+    param([Parameter(Mandatory)][string]$ExecutablePath)
+    $directory = Split-Path -Parent $ExecutablePath
+    $probePath = Join-Path $directory ('.easywingetplus-update-probe-{0}.tmp' -f [guid]::NewGuid().ToString('N'))
+    try {
+        $stream = [IO.File]::Open($probePath, 'CreateNew', 'Write', 'None')
+        $stream.Dispose()
+        Remove-Item -LiteralPath $probePath -Force
+        $true
+    } catch {
+        try { if (Test-Path -LiteralPath $probePath) { Remove-Item -LiteralPath $probePath -Force } } catch { }
+        $false
+    }
+}
+
+function Test-DownloadedUpdateExecutable {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][version]$ExpectedVersion)
+    try {
+        $file = Get-Item -LiteralPath $Path -ErrorAction Stop
+        if ($file.Length -lt 20480) { return $false }
+        $stream = [IO.File]::OpenRead($file.FullName)
+        try {
+            if ($stream.ReadByte() -ne 0x4D -or $stream.ReadByte() -ne 0x5A) { return $false }
+        } finally {
+            $stream.Dispose()
+        }
+        $downloadedVersion = ConvertTo-ReleaseVersion $file.VersionInfo.FileVersion
+        $downloadedVersion -and $downloadedVersion -ge $ExpectedVersion
+    } catch {
+        $false
+    }
+}
+
+function Start-OnlineUpdateDownload {
+    param($Release, $Asset, [version]$ReleaseVersion)
+    try {
+        $assetUri = [Uri][string]$Asset.browser_download_url
+        if ($assetUri.Scheme -ne 'https' -or $assetUri.Host -ne 'github.com') { throw 'The release asset URL is not an approved GitHub HTTPS URL.' }
+
+        $downloadDirectory = Join-Path (Join-Path $env:TEMP 'EasyWinGetPlus\Updates') ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $downloadDirectory -Force | Out-Null
+        $downloadPath = Join-Path $downloadDirectory ([IO.Path]::GetFileName([string]$Asset.name))
+        $client = [Net.WebClient]::new()
+        $client.Headers['User-Agent'] = "EasyWinGetPlus/$script:AppVersion"
+        $operation = [pscustomobject]@{
+            Kind = 'UpdateDownload'; Activity = (Get-UiText 'DownloadingOnlineUpdate' @($ReleaseVersion))
+            Client = $client; Task = $client.DownloadFileTaskAsync($assetUri, $downloadPath)
+            DownloadPath = $downloadPath; DownloadDirectory = $downloadDirectory
+            ReleaseVersion = $ReleaseVersion; Release = $Release
+        }
+        [void]$script:AsyncOperations.Add($operation)
+        Update-AsyncIndicator
+        $script:OnlineUpdateButton.Content = $operation.Activity
+        Set-Status $operation.Activity
+    } catch {
+        Stop-OnlineUpdateWithError $_.Exception.Message
+    }
+}
+
+function ConvertTo-PowerShellSingleQuotedLiteral {
+    param([string]$Value)
+    "'" + ([string]$Value).Replace("'", "''") + "'"
+}
+
+function New-UpdateHelperEncodedCommand {
+    param(
+        [Parameter(Mandatory)][string]$CurrentExe,
+        [Parameter(Mandatory)][string]$PackageExe,
+        [Parameter(Mandatory)][string]$ExpectedHash,
+        [Parameter(Mandatory)][int]$LauncherPid,
+        [Parameter(Mandatory)][string]$DownloadDirectory,
+        [bool]$Restart = $true
+    )
+    $helper = @'
+$ErrorActionPreference = 'Stop'
+$currentExe = __CURRENT_EXE__
+$packageExe = __PACKAGE_EXE__
+$expectedHash = __EXPECTED_HASH__
+$launcherPid = __LAUNCHER_PID__
+$downloadDirectory = __DOWNLOAD_DIRECTORY__
+$restart = __RESTART__
+$backupPath = "$currentExe.update-backup"
+$stagingPath = "$currentExe.update-new"
+$updateError = $null
+
+function Write-UpdateLog([string]$Message) {
+    try {
+        $logDirectory = Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus\Logs'
+        New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+        $logPath = Join-Path $logDirectory ("update-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
+        $Message | Set-Content -LiteralPath $logPath -Encoding UTF8
+        $logPath
+    } catch { $null }
+}
+
+try {
+    if ($launcherPid -gt 0) {
+        $deadline = [DateTime]::UtcNow.AddSeconds(90)
+        while ([DateTime]::UtcNow -lt $deadline) {
+            if (-not (Get-Process -Id $launcherPid -ErrorAction SilentlyContinue)) { break }
+            Start-Sleep -Milliseconds 200
+        }
+        if (Get-Process -Id $launcherPid -ErrorAction SilentlyContinue) { throw 'The running application did not exit before the update timeout.' }
+    }
+
+    if (-not (Test-Path -LiteralPath $currentExe -PathType Leaf)) { throw "Current executable was not found: $currentExe" }
+    if (-not (Test-Path -LiteralPath $packageExe -PathType Leaf)) { throw "Downloaded executable was not found: $packageExe" }
+    $actualHash = (Get-FileHash -LiteralPath $packageExe -Algorithm SHA256).Hash
+    if ($actualHash -ne $expectedHash) { throw 'The downloaded update changed after verification.' }
+
+    Remove-Item -LiteralPath $stagingPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath $packageExe -Destination $stagingPath -Force
+    Move-Item -LiteralPath $currentExe -Destination $backupPath -Force
+    try {
+        Move-Item -LiteralPath $stagingPath -Destination $currentExe -Force
+    } catch {
+        Move-Item -LiteralPath $backupPath -Destination $currentExe -Force
+        throw
+    }
+
+    if ($restart) { Start-Process -FilePath $currentExe -WorkingDirectory (Split-Path -Parent $currentExe) }
+    Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+    if ($downloadDirectory -and (Test-Path -LiteralPath $downloadDirectory -PathType Container)) {
+        Remove-Item -LiteralPath $downloadDirectory -Recurse -Force -ErrorAction SilentlyContinue
+    }
+} catch {
+    $updateError = $_.Exception.Message
+    $details = $_ | Out-String
+    $logPath = Write-UpdateLog $details
+    try {
+        if (Test-Path -LiteralPath $backupPath) {
+            Remove-Item -LiteralPath $currentExe -Force -ErrorAction SilentlyContinue
+            Move-Item -LiteralPath $backupPath -Destination $currentExe -Force
+        }
+        if ($restart -and (Test-Path -LiteralPath $currentExe)) {
+            Start-Process -FilePath $currentExe -WorkingDirectory (Split-Path -Parent $currentExe)
+        }
+    } catch { }
+    Add-Type -AssemblyName System.Windows.Forms
+    $message = "Easy WinGet Plus 更新失敗。`r`n`r`n$updateError"
+    if ($logPath) { $message += "`r`n`r`n診斷紀錄：$logPath" }
+    [Windows.Forms.MessageBox]::Show($message, 'Easy WinGet Plus Updater', 'OK', 'Error') | Out-Null
+    exit 1
+}
+'@
+    $helper = $helper.Replace('__CURRENT_EXE__', (ConvertTo-PowerShellSingleQuotedLiteral $CurrentExe))
+    $helper = $helper.Replace('__PACKAGE_EXE__', (ConvertTo-PowerShellSingleQuotedLiteral $PackageExe))
+    $helper = $helper.Replace('__EXPECTED_HASH__', (ConvertTo-PowerShellSingleQuotedLiteral $ExpectedHash))
+    $helper = $helper.Replace('__LAUNCHER_PID__', [string]$LauncherPid)
+    $helper = $helper.Replace('__DOWNLOAD_DIRECTORY__', (ConvertTo-PowerShellSingleQuotedLiteral $DownloadDirectory))
+    $helper = $helper.Replace('__RESTART__', $(if ($Restart) { '$true' } else { '$false' }))
+    [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($helper))
+}
+
+function Complete-OnlineUpdateCheck {
+    param([string]$Response)
+    try {
+        $release = $Response | ConvertFrom-Json
+        $releaseVersion = ConvertTo-ReleaseVersion ([string]$release.tag_name)
+        $currentVersion = [version]$script:AppVersion
+        if (-not $releaseVersion) { throw 'The public release tag does not contain a valid version.' }
+        if ($releaseVersion -le $currentVersion) {
+            Set-OnlineUpdateIdle
+            Set-Status (Get-UiText 'AlreadyLatest')
+            return
+        }
+
+        $assets = @($release.assets)
+        $asset = $assets | Where-Object { $_.name -ieq 'EasyWinGetPlus.exe' } | Select-Object -First 1
+        if (-not $asset) { $asset = $assets | Where-Object { $_.name -match '^EasyWinGetPlus-v?[\d.]+-win-x64\.zip$' } | Select-Object -First 1 }
+        if (-not $asset) { $asset = $assets | Where-Object { $_.name -match '^EasyWinGetPlus.*\.zip$' } | Select-Object -First 1 }
+        if (-not $asset) { throw (Get-UiText 'UpdateAssetMissing') }
+        Start-OnlineUpdateDownload $release $asset $releaseVersion
+    } catch {
+        Stop-OnlineUpdateWithError $_.Exception.Message
+    }
+}
+
+function Complete-OnlineUpdateDownload {
+    param($Operation)
+    try {
+        $packageExe = $Operation.DownloadPath
+        if ([IO.Path]::GetExtension($Operation.DownloadPath) -ieq '.zip') {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $packageExe = Join-Path $Operation.DownloadDirectory 'EasyWinGetPlus.exe'
+            $archive = [IO.Compression.ZipFile]::OpenRead($Operation.DownloadPath)
+            try {
+                $entry = $archive.Entries | Where-Object { $_.Name -ieq 'EasyWinGetPlus.exe' } | Select-Object -First 1
+                if (-not $entry) { throw (Get-UiText 'UpdateAssetMissing') }
+                [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $packageExe, $true)
+            } finally {
+                $archive.Dispose()
+            }
+        }
+
+        if (-not (Test-DownloadedUpdateExecutable $packageExe $Operation.ReleaseVersion)) {
+            throw (Get-UiText 'UpdateInvalid')
+        }
+
+        $currentExe = [string]$env:EASYWINGETPLUS_EXECUTABLE
+        $launcherPid = 0
+        [void][int]::TryParse([string]$env:EASYWINGETPLUS_LAUNCHER_PID, [ref]$launcherPid)
+        if (-not $currentExe) {
+            throw (Get-UiText 'UpdateSourceMode')
+        }
+
+        $currentExe = [IO.Path]::GetFullPath($currentExe)
+        $packageExe = [IO.Path]::GetFullPath($packageExe)
+        $expectedHash = (Get-FileHash -LiteralPath $packageExe -Algorithm SHA256).Hash
+        $encodedCommand = New-UpdateHelperEncodedCommand $currentExe $packageExe $expectedHash $launcherPid $Operation.DownloadDirectory
+
+        $requiresElevation = -not (Test-UpdateTargetWritable $currentExe)
+        if ($requiresElevation) { Set-Status (Get-UiText 'UpdateUac') }
+
+        $powerShellPath = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $startInfo = [Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $powerShellPath
+        $startInfo.Arguments = '-NoProfile -ExecutionPolicy Bypass -STA -EncodedCommand ' + $encodedCommand
+        $startInfo.UseShellExecute = $true
+        $startInfo.WorkingDirectory = Split-Path -Parent $currentExe
+        $startInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+        if ($requiresElevation) { $startInfo.Verb = 'runas' }
+        $updaterProcess = [Diagnostics.Process]::Start($startInfo)
+        if (-not $updaterProcess) { throw 'The update helper could not be started.' }
+
+        Set-Status (Get-UiText 'UpdateStarting')
+        $script:AboutPopup.IsOpen = $false
+        $script:Window.Close()
+    } catch {
+        Stop-OnlineUpdateWithError $_.Exception.Message
+    }
+}
+
+function Start-OnlineUpdate {
+    if (@($script:AsyncOperations | Where-Object { $_.Kind -like 'Update*' }).Count) { return }
+    if (-not $env:EASYWINGETPLUS_EXECUTABLE) {
+        Stop-OnlineUpdateWithError (Get-UiText 'UpdateSourceMode')
+        return
+    }
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        $client = [Net.WebClient]::new()
+        $client.Encoding = [Text.Encoding]::UTF8
+        $client.Headers['User-Agent'] = "EasyWinGetPlus/$script:AppVersion"
+        $client.Headers['Accept'] = 'application/vnd.github+json'
+        $operation = [pscustomobject]@{
+            Kind = 'UpdateCheck'; Activity = (Get-UiText 'CheckingOnlineUpdate'); Client = $client
+            Task = $client.DownloadStringTaskAsync([Uri]$script:ReleaseApiUri)
+        }
+        $script:OnlineUpdateButton.IsEnabled = $false
+        $script:OnlineUpdateButton.Content = $operation.Activity
+        [void]$script:AsyncOperations.Add($operation)
+        Update-AsyncIndicator
+        Set-Status $operation.Activity
+    } catch {
+        Stop-OnlineUpdateWithError $_.Exception.Message
+    }
+}
+
 function Start-AsyncMonitor {
     $script:AsyncTimer = [System.Windows.Threading.DispatcherTimer]::new()
     $script:AsyncTimer.Interval = [TimeSpan]::FromMilliseconds(150)
@@ -360,7 +643,7 @@ function Start-AsyncMonitor {
                         # parser receives the actual output lines.
                         & $success $lines $operation.State
                     }
-                } else {
+                } elseif ($operation.Kind -eq 'Translation') {
                     if ($operation.Task.IsFaulted -or $operation.Task.IsCanceled) {
                         $success = $operation.OnSuccess; & $success $operation.OriginalText $operation.State
                         Set-Status (Get-UiText 'TranslationUnavailable') $true
@@ -372,11 +655,24 @@ function Start-AsyncMonitor {
                         Set-Status (Get-UiText 'TranslationComplete')
                     }
                     $operation.Client.Dispose()
+                } elseif ($operation.Kind -eq 'UpdateCheck') {
+                    if ($operation.Task.IsFaulted -or $operation.Task.IsCanceled) { throw $operation.Task.Exception }
+                    $response = $operation.Task.Result
+                    $operation.Client.Dispose()
+                    Complete-OnlineUpdateCheck $response
+                } elseif ($operation.Kind -eq 'UpdateDownload') {
+                    if ($operation.Task.IsFaulted -or $operation.Task.IsCanceled) { throw $operation.Task.Exception }
+                    $operation.Client.Dispose()
+                    Complete-OnlineUpdateDownload $operation
                 }
             } catch {
                 if ($operation.Kind -eq 'Translation') {
                     $success = $operation.OnSuccess; & $success $operation.OriginalText $operation.State
                     try { $operation.Client.Dispose() } catch { }
+                } elseif ($operation.Kind -like 'Update*') {
+                    try { $operation.Client.Dispose() } catch { }
+                    Stop-OnlineUpdateWithError $_.Exception.Message
+                    continue
                 }
                 Set-Status (Get-UiText 'OperationError' @($operation.Activity, $_.Exception.Message)) $true
             }
@@ -1151,6 +1447,8 @@ $script:Winget = Find-Winget
           <TextBlock Grid.Row="1" Text="{DynamicResource Email}" Foreground="#94A3B8" Margin="0,5"/><TextBlock Grid.Row="1" Grid.Column="1" Margin="0,5"><Hyperlink x:Name="EmailLink" NavigateUri="mailto:chehui@gmail.com" Foreground="#38BDF8">chehui@gmail.com</Hyperlink></TextBlock>
           <TextBlock Grid.Row="2" Text="{DynamicResource Website}" Foreground="#94A3B8" Margin="0,5"/><TextBlock Grid.Row="2" Grid.Column="1" Margin="0,5"><Hyperlink x:Name="WebsiteLink" NavigateUri="https://ahui3c.com" Foreground="#38BDF8">https://ahui3c.com</Hyperlink></TextBlock>
         </Grid>
+        <Separator Background="#334155" Margin="0,18,0,14"/>
+        <Button x:Name="OnlineUpdateButton" Content="{DynamicResource OnlineUpdate}" HorizontalAlignment="Stretch" Background="#059669" Padding="16,10"/>
       </StackPanel></Border>
     </Popup>
     <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0" Background="#0B1120" BorderBrush="#253047">
@@ -1194,7 +1492,7 @@ $script:Winget = Find-Winget
 
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $script:Window = [Windows.Markup.XamlReader]::Load($reader)
-foreach ($name in @('StatusText','ClearStatusButton','BusyProgress','ActionProgressPanel','ActionProgressText','ActionProgressBar','MainTabs','AboutButton','AboutPopup','CloseAboutButton','HeaderVersionText','AboutVersionText','EmailLink','WebsiteLink','WingetBadge','WingetBadgeText','SearchBox','SearchButton','SearchGrid','SearchDescription','InstallButton','UpgradeCount','UpgradeFilterBox','RefreshUpgradeButton','ExcludeUpgradeButton','UpgradeSelectedButton','UpgradeAllButton','UpgradeGrid','InstalledCount','InstalledFilterBox','RefreshInstalledButton','ExcludeInstalledButton','ExportButton','UninstallButton','InstalledGrid','ImportCount','ImportButton','ImportGrid','InstallImportedButton','InterfaceLanguageCombo','SilentInstallCheck','SilentUpgradeCheck','HideActionWindowsCheck','AutoTranslateCheck','LanguageCombo','ClearExclusionsButton','SettingsPathText')) {
+foreach ($name in @('StatusText','ClearStatusButton','BusyProgress','ActionProgressPanel','ActionProgressText','ActionProgressBar','MainTabs','AboutButton','AboutPopup','CloseAboutButton','OnlineUpdateButton','HeaderVersionText','AboutVersionText','EmailLink','WebsiteLink','WingetBadge','WingetBadgeText','SearchBox','SearchButton','SearchGrid','SearchDescription','InstallButton','UpgradeCount','UpgradeFilterBox','RefreshUpgradeButton','ExcludeUpgradeButton','UpgradeSelectedButton','UpgradeAllButton','UpgradeGrid','InstalledCount','InstalledFilterBox','RefreshInstalledButton','ExcludeInstalledButton','ExportButton','UninstallButton','InstalledGrid','ImportCount','ImportButton','ImportGrid','InstallImportedButton','InterfaceLanguageCombo','SilentInstallCheck','SilentUpgradeCheck','HideActionWindowsCheck','AutoTranslateCheck','LanguageCombo','ClearExclusionsButton','SettingsPathText')) {
     Set-Variable -Scope Script -Name $name -Value $script:Window.FindName($name)
 }
 
@@ -1215,6 +1513,7 @@ Start-AsyncMonitor
 
 $script:AboutButton.Add_Click({ $script:AboutPopup.IsOpen = $true })
 $script:CloseAboutButton.Add_Click({ $script:AboutPopup.IsOpen = $false })
+$script:OnlineUpdateButton.Add_Click({ Start-OnlineUpdate })
 $script:ClearStatusButton.Add_Click({ Set-Status (Get-UiText 'Ready') })
 $script:EmailLink.Add_RequestNavigate({
     param($sender, $eventArgs)
@@ -1404,7 +1703,7 @@ $script:Window.Add_Closing({
     foreach ($operation in @($script:AsyncOperations)) {
         try {
             if ($operation.Kind -eq 'Process' -and -not $operation.Process.HasExited) { $operation.Process.Kill() }
-            elseif ($operation.Kind -eq 'Translation') { $operation.Client.CancelAsync(); $operation.Client.Dispose() }
+            elseif ($operation.Client) { $operation.Client.CancelAsync(); $operation.Client.Dispose() }
         } catch { }
     }
 })

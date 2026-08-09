@@ -6,7 +6,16 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.3**
+Current version: **0.1.4**
+
+## What's new in 0.1.4
+
+- Fixed hidden PowerShell or WPF startup failures that could make the application appear to do nothing
+- Startup failures now show bilingual error details and the PowerShell exit code
+- Full startup diagnostics are written to `%LOCALAPPDATA%\EasyWinGetPlus\Logs`
+- The launcher explicitly checks for Windows PowerShell and uses `%TEMP%` as a fallback diagnostic location
+- Added Online update to the About popup for automatic GitHub release download, in-place replacement, and restart
+- Protected install locations automatically request UAC consent; updates are checked by version, PE header, and SHA-256 before replacement
 
 ## What's new in 0.1.3
 
@@ -33,6 +42,7 @@ Current version: **0.1.3**
 - Prevent multiple main windows and warn when an update or removal may require user interaction
 - Show installation and update failures in a dedicated, scrollable, closable error-report window
 - Keep all settings beside the program for portable use
+- Update online from the About popup; the app replaces itself and restarts automatically after download
 - Traditional Chinese and English interface with a manual first-launch language choice
 
 ## Interface preview
@@ -72,6 +82,7 @@ Switch the interface language, configure silent installation and updates, enable
 - Windows 10 version 1809 or later, or Windows 11
 - Windows PowerShell 5.1
 - `winget.exe`, supplied by Microsoft App Installer
+- Access to GitHub and GitHub Releases when using Online update
 
 Windows 11 normally includes Winget. If the app reports that Winget is missing, install or update **App Installer** from the Microsoft Store.
 
@@ -121,6 +132,7 @@ It stores the interface and translation languages, silent-mode choices, automati
 
 - No translation service is contacted unless description translation is enabled.
 - When enabled, up to 450 characters of an app description are sent to the public MyMemory translation service.
+- The app contacts GitHub Releases only when the user presses Online update, to check and download a public release.
 - Exported installation lists contain package IDs, names, and sources only; they do not contain a Windows account or device identifier.
 
 ## License
