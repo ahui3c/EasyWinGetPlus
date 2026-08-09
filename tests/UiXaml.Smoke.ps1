@@ -11,6 +11,8 @@ $reader = [System.Xml.XmlNodeReader]::new($xaml)
 $window = [System.Windows.Markup.XamlReader]::Load($reader)
 $tabs = $window.FindName('MainTabs')
 if (-not $tabs -or $tabs.Items.Count -ne 5) { throw 'The main tab control did not load correctly.' }
+$onlineUpdateButton = $window.FindName('OnlineUpdateButton')
+if (-not $onlineUpdateButton) { throw 'The About popup online-update button did not load.' }
 
 $tabs.SelectedIndex = 4
 $settingsTab = $tabs.Items[4]

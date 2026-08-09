@@ -6,7 +6,16 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 
 **完全免費、無廣告，並以開放原始碼方式提供。**
 
-目前版本：**0.1.3**
+目前版本：**0.1.4**
+
+## 0.1.4 更新簡述
+
+- 修正啟動階段的 PowerShell 或 WPF 錯誤可能被隱藏、造成執行後完全無畫面的問題
+- 啟動失敗時顯示雙語錯誤資訊與 PowerShell 結束代碼
+- 將完整啟動診斷寫入 `%LOCALAPPDATA%\EasyWinGetPlus\Logs`
+- 明確檢查系統內建 Windows PowerShell，並保留 `%TEMP%` 作為診斷紀錄備援位置
+- 關於頁面新增「線上更新」，自動取得 GitHub 最新公開版本、原地替換並重新啟動
+- 程式位於受保護位置時自動顯示 UAC 授權，更新檔以版本、PE 標頭及 SHA-256 二次驗證
 
 ## 0.1.3 更新簡述
 
@@ -33,6 +42,7 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 - 避免同時開啟多個主程式，並在更新或移除可能需要互動時主動提醒
 - 安裝與更新失敗時使用獨立、可捲動且可關閉的錯誤報告視窗
 - 所有設定儲存在程式旁，可連同整個資料夾攜帶
+- 關於頁面可一鍵線上更新；下載完成後會自動替換程式並重新啟動
 - 支援繁體中文與英文介面，第一次啟動時手動選擇
 
 ## 介面預覽
@@ -72,6 +82,7 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 - Windows 10 1809 或更新版本，或 Windows 11
 - Windows PowerShell 5.1
 - Microsoft App Installer 所提供的 `winget.exe`
+- 使用線上更新時需能連線至 GitHub 與 GitHub Releases
 
 Windows 11 通常已包含 Winget。若程式顯示找不到 Winget，請從 Microsoft Store 安裝或更新「應用程式安裝程式」。
 
@@ -121,6 +132,7 @@ EasyWinGetPlus.settings.json
 
 - 未啟用說明翻譯時，不會呼叫翻譯服務。
 - 啟用翻譯時，最多 450 個字元的軟體說明會傳送到 MyMemory 公開翻譯服務。
+- 只有使用者按下「線上更新」時，程式才會連線至 GitHub Releases 檢查及下載公開版本。
 - 匯出的安裝清單只包含套件識別碼、名稱與來源，不包含 Windows 帳號或電腦識別資訊。
 
 ## 授權

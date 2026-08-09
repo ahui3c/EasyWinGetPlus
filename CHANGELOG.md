@@ -1,5 +1,31 @@
 # Changelog / 更新紀錄
 
+## 0.1.4 — 2026-08-09
+
+Startup diagnostics and visible failure reporting / 啟動診斷與可見錯誤回報
+
+- Capture PowerShell standard output and error output in the packaged launcher
+- Detect non-zero PowerShell exit codes and display a bilingual startup error
+- Write detailed startup diagnostics to the user's local application data directory, with a temporary-directory fallback
+- Resolve and validate the built-in Windows PowerShell executable before launch
+- Add a user-triggered online updater to the About popup using the latest public GitHub release
+- Download EXE or Windows ZIP assets, validate the version and PE header, and recheck SHA-256 immediately before replacement
+- Replace the running executable through a separate encoded update process, restart automatically, and restore the previous executable if replacement fails
+- Request UAC consent automatically when the executable directory is not writable
+
+---
+
+- 封裝版啟動器會捕捉 PowerShell 標準輸出與錯誤輸出
+- 偵測非零 PowerShell 結束代碼並顯示雙語啟動錯誤
+- 將完整啟動診斷寫入使用者本機應用程式資料夾，失敗時改用暫存資料夾
+- 啟動前明確解析並驗證系統內建 Windows PowerShell 執行檔
+- 關於頁面新增由使用者觸發的線上更新，使用 GitHub 最新公開版本
+- 支援下載 EXE 或 Windows ZIP，驗證版本與 PE 標頭，並在替換前再次核對 SHA-256
+- 由獨立編碼更新程序替換執行中的 EXE、自動重新啟動，替換失敗時回復原執行檔
+- 執行檔目錄不可寫入時自動要求 UAC 授權
+
+---
+
 ## 0.1.3 — 2026-07-18
 
 Single-instance, interaction guidance, and interface-contrast update / 單一執行、互動提醒與介面對比更新
