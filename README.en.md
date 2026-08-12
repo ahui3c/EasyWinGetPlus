@@ -6,7 +6,14 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.5**
+Current version: **0.1.6**
+
+## What's new in 0.1.6
+
+- Centered the Select and Skip auto update column headers to align with their checkboxes
+- Made name, package ID, version, and source columns read-only so double-clicking no longer enters a meaningless text-editing state
+- Preserved normal interaction for selection, skip-update, and import-install checkboxes
+- Added Add to exclusions at the bottom of the Updates and Installed Apps context menus; it excludes only the app that was right-clicked
 
 ## What's new in 0.1.5
 

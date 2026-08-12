@@ -1,5 +1,25 @@
 # Changelog / 更新紀錄
 
+## 0.1.6 — 2026-08-12
+
+Read-only package lists and column alignment / 唯讀套件清單與欄位對齊
+
+- Center the Select and Skip auto update column headers over their checkbox cells
+- Mark all package-list text columns as read-only to prevent meaningless double-click editing
+- Keep selection, skip-update, and import-install checkbox columns interactive
+- Add a single-item Add to exclusions command at the bottom of the Updates and Installed Apps context menus
+- Expand WPF UI smoke coverage for text-column editability and checkbox-column behavior
+
+---
+
+- 將「選取」及「不自動更新」欄位標題置中顯示，與欄內核取方塊對齊
+- 所有套件清單文字欄位改為唯讀，避免雙擊進入沒有實際用途的編輯狀態
+- 保留選取、不自動更新及匯入安裝核取方塊的正常操作
+- 軟體更新與已安裝程式管理右鍵選單末端新增單一項目「加入排除項目」功能
+- 擴充 WPF 介面測試，驗證文字欄位唯讀且核取方塊仍可操作
+
+---
+
 ## 0.1.5 — 2026-08-12
 
 Windows PowerShell 5.1 encoding compatibility / Windows PowerShell 5.1 編碼相容性修正
