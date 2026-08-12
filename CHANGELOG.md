@@ -1,5 +1,21 @@
 # Changelog / 更新紀錄
 
+## 0.1.5 — 2026-08-12
+
+Windows PowerShell 5.1 encoding compatibility / Windows PowerShell 5.1 編碼相容性修正
+
+- Write the embedded application script as UTF-8 with BOM when extracting it from the packaged executable
+- Prevent Windows PowerShell 5.1 from interpreting Traditional Chinese source text through the active ANSI code page
+- Add an end-to-end packaged-resource test for the BOM, preserved Traditional Chinese text, and PowerShell parser validity
+
+---
+
+- 封裝版執行檔抽出內嵌主程式時，固定寫入 UTF-8 BOM
+- 避免 Windows PowerShell 5.1 使用系統 ANSI 字碼頁解讀繁體中文原始碼
+- 新增端對端封裝資源測試，驗證 BOM、繁體中文內容及 PowerShell 語法完整性
+
+---
+
 ## 0.1.4 — 2026-08-09
 
 Startup diagnostics and visible failure reporting / 啟動診斷與可見錯誤回報

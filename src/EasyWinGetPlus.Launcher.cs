@@ -11,12 +11,12 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("廖阿輝")]
 [assembly: AssemblyProduct("Easy WinGet Plus")]
 [assembly: AssemblyCopyright("Copyright © 2026 廖阿輝")]
-[assembly: AssemblyVersion("0.1.4.0")]
-[assembly: AssemblyFileVersion("0.1.4.0")]
+[assembly: AssemblyVersion("0.1.5.0")]
+[assembly: AssemblyFileVersion("0.1.5.0")]
 
 internal static class Program
 {
-    private const string Version = "0.1.4";
+    private const string Version = "0.1.5";
     private const string ResourceName = "EasyWinGetPlus.ps1";
 
     private static void ExtractResource(string resourceName, string destinationPath)
@@ -26,8 +26,14 @@ internal static class Program
             if (resource == null)
                 throw new InvalidOperationException("The embedded resource could not be found: " + resourceName);
 
-            using (FileStream output = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                resource.CopyTo(output);
+            // Windows PowerShell 5.1 treats UTF-8 files without a BOM as the
+            // active ANSI code page. Always rewrite the embedded script as
+            // UTF-8 with BOM so Traditional Chinese strings remain parseable.
+            using (StreamReader reader = new StreamReader(resource, new UTF8Encoding(false), true))
+            {
+                string script = reader.ReadToEnd();
+                File.WriteAllText(destinationPath, script, new UTF8Encoding(true));
+            }
         }
     }
 
@@ -100,10 +106,16 @@ internal static class Program
     }
 
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         try
         {
+            if (args.Length == 2 && String.Equals(args[0], "--extract-script", StringComparison.OrdinalIgnoreCase))
+            {
+                ExtractResource(ResourceName, Path.GetFullPath(args[1]));
+                return;
+            }
+
             bool createdNew;
             using (Mutex instanceMutex = new Mutex(true, @"Local\EasyWinGetPlus.LauncherInstance.8F5276E2", out createdNew))
             {

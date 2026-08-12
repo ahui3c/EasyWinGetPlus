@@ -32,7 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.4'
+$script:AppVersion = '0.1.5'
 $script:DataDirectory = if ($env:EASYWINGETPLUS_HOME) { $env:EASYWINGETPLUS_HOME } else { $PSScriptRoot }
 $script:SettingsPath = Join-Path $script:DataDirectory 'EasyWinGetPlus.settings.json'
 $script:LegacySettingsPath = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'settings.json'
