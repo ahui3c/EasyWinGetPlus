@@ -32,7 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.5'
+$script:AppVersion = '0.1.6'
 $script:DataDirectory = if ($env:EASYWINGETPLUS_HOME) { $env:EASYWINGETPLUS_HOME } else { $PSScriptRoot }
 $script:SettingsPath = Join-Path $script:DataDirectory 'EasyWinGetPlus.settings.json'
 $script:LegacySettingsPath = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'settings.json'
@@ -130,6 +130,8 @@ function Apply-InterfaceLanguage {
     if ($script:UninstallSingleMenuItem) { $script:UninstallSingleMenuItem.Header = Get-UiText 'RemoveSingle' }
     if ($script:UninstallUpgradeMenuItem) { $script:UninstallUpgradeMenuItem.Header = Get-UiText 'RemoveSingle' }
     if ($script:UpgradeSingleMenuItem) { $script:UpgradeSingleMenuItem.Header = Get-UiText 'UpgradeSingle' }
+    if ($script:ExcludeInstalledMenuItem) { $script:ExcludeInstalledMenuItem.Header = Get-UiText 'AddExclusion' }
+    if ($script:ExcludeUpgradeMenuItem) { $script:ExcludeUpgradeMenuItem.Header = Get-UiText 'AddExclusion' }
     if ($script:ImportedApps.Count -and $script:ImportCount) { $script:ImportCount.Text = Get-UiText 'ImportLoaded' @($script:ImportedApps.Count) }
     if ($script:UpgradeScanned) { Apply-PackageListFilter Upgrade }
     if ($script:InstalledScanned) { Apply-PackageListFilter Installed }
@@ -1224,21 +1226,36 @@ function Search-Packages {
     Start-WingetQuery -Arguments @('search', '--query', $query, '--accept-source-agreements', '--disable-interactivity') -Activity (Get-UiText 'Searching' @($query)) -OnSuccess $searchCompleted -State $query
 }
 
+function Get-PackagesToExclude {
+    param(
+        [object[]]$Items,
+        $SelectedItem,
+        [switch]$SelectedItemOnly
+    )
+    if ($SelectedItemOnly.IsPresent) {
+        if ($null -ne $SelectedItem) { return @($SelectedItem) }
+        return @()
+    }
+    $targets = @($Items | Where-Object Selected)
+    if (-not $targets.Count -and $null -ne $SelectedItem) { $targets = @($SelectedItem) }
+    @($targets)
+}
+
 function Add-PackagesToExclusions {
     param(
         [Parameter(Mandatory)]$Grid,
-        [Parameter(Mandatory)][ValidateSet('Upgrade','Installed')][string]$ListKind
+        [Parameter(Mandatory)][ValidateSet('Upgrade','Installed')][string]$ListKind,
+        [switch]$SelectedItemOnly
     )
     try { $Grid.CommitEdit([System.Windows.Controls.DataGridEditingUnit]::Cell, $true) | Out-Null } catch { }
     $items = if ($ListKind -eq 'Upgrade') { @($script:UpgradeApps) } else { @($script:InstalledApps) }
-    $targets = @($items | Where-Object Selected)
-    if (-not $targets.Count -and $Grid.SelectedItem) { $targets = @($Grid.SelectedItem) }
+    $targets = @(Get-PackagesToExclude -Items $items -SelectedItem $Grid.SelectedItem -SelectedItemOnly:$SelectedItemOnly)
     if (-not $targets.Count) {
         Set-Status (Get-UiText 'SelectExclude') $true
         return
     }
 
-    $newIds = @($targets | ForEach-Object Id | Where-Object { $_ } | Sort-Object -Unique)
+    $newIds = @($targets | ForEach-Object { [string]$_.Id } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
     $script:Settings.ExcludedPackages = @(@($script:Settings.ExcludedPackages) + $newIds | Sort-Object -Unique)
     Save-AppSettings
 
@@ -1414,6 +1431,7 @@ $script:Winget = Find-Winget
     <Style TargetType="CheckBox"><Setter Property="Foreground" Value="#E5E7EB"/><Setter Property="Margin" Value="4"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
     <Style TargetType="DataGrid"><Setter Property="Background" Value="#111827"/><Setter Property="Foreground" Value="#E5E7EB"/><Setter Property="RowBackground" Value="#111827"/><Setter Property="AlternatingRowBackground" Value="#172033"/><Setter Property="HorizontalGridLinesBrush" Value="#243244"/><Setter Property="VerticalGridLinesBrush" Value="#243244"/><Setter Property="BorderBrush" Value="#334155"/><Setter Property="HeadersVisibility" Value="Column"/><Setter Property="CanUserAddRows" Value="False"/><Setter Property="AutoGenerateColumns" Value="False"/><Setter Property="SelectionMode" Value="Single"/><Setter Property="SelectionUnit" Value="FullRow"/></Style>
     <Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#1E293B"/><Setter Property="Foreground" Value="#CBD5E1"/><Setter Property="Padding" Value="8"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style x:Key="CenteredDataGridColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}"><Setter Property="HorizontalContentAlignment" Value="Center"/></Style>
     <Style TargetType="TabItem">
       <Setter Property="Foreground" Value="#E2E8F0"/><Setter Property="Background" Value="#111827"/><Setter Property="BorderBrush" Value="#475569"/><Setter Property="Padding" Value="20,11"/>
       <Setter Property="Template">
@@ -1455,24 +1473,24 @@ $script:Winget = Find-Winget
       <TabItem Header="{DynamicResource TabUpgrade}"><Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid><TextBlock x:Name="UpgradeCount" Text="{DynamicResource NotScanned}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><Button x:Name="RefreshUpgradeButton" Content="{DynamicResource Refresh}"/><Button x:Name="ExcludeUpgradeButton" Content="{DynamicResource AddExclusion}" Background="#7C3AED"/><Button x:Name="UpgradeSelectedButton" Content="{DynamicResource UpgradeSelected}"/><Button x:Name="UpgradeAllButton" Content="{DynamicResource UpgradeAll}" MinWidth="190" Height="52" Margin="12,0,4,0" Padding="26,12" FontSize="17" FontWeight="Bold" Background="#10B981" BorderBrush="#6EE7B7" BorderThickness="2"><Button.Effect><DropShadowEffect Color="#10B981" BlurRadius="16" ShadowDepth="0" Opacity="0.6"/></Button.Effect></Button></StackPanel></Grid>
         <Grid Grid.Row="1" Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="320"/><ColumnDefinition/></Grid.ColumnDefinitions><TextBlock Text="{DynamicResource FilterList}" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#CBD5E1"/><TextBox x:Name="UpgradeFilterBox" Grid.Column="1" ToolTip="{DynamicResource FilterTip}"/></Grid>
-        <DataGrid x:Name="UpgradeGrid" Grid.Row="2" Margin="0,10"><DataGrid.Columns><DataGridTemplateColumn Header="{DynamicResource Select}" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource CurrentVersion}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn Header="{DynamicResource NewVersion}" Binding="{Binding Available}" Width="*"/><DataGridTemplateColumn Header="{DynamicResource SkipAutoUpgrade}" Width="115"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding SkipAutoUpgrade, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{DynamicResource SkipAutoUpgrade}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn></DataGrid.Columns></DataGrid>
+        <DataGrid x:Name="UpgradeGrid" Grid.Row="2" Margin="0,10"><DataGrid.Columns><DataGridTemplateColumn Header="{DynamicResource Select}" HeaderStyle="{StaticResource CenteredDataGridColumnHeader}" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource CurrentVersion}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource NewVersion}" Binding="{Binding Available}" Width="*"/><DataGridTemplateColumn Header="{DynamicResource SkipAutoUpgrade}" HeaderStyle="{StaticResource CenteredDataGridColumnHeader}" Width="115"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding SkipAutoUpgrade, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{DynamicResource SkipAutoUpgrade}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn></DataGrid.Columns></DataGrid>
         <TextBlock Grid.Row="3" Text="{DynamicResource UpgradeExclusionHint}" Foreground="#94A3B8"/>
       </Grid></TabItem>
       <TabItem Header="{DynamicResource TabSearch}"><Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="150"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="SearchBox" FontSize="15" ToolTip="{DynamicResource SearchTip}"/><Button x:Name="SearchButton" Grid.Column="1" Content="{DynamicResource Search}" MinWidth="90" IsDefault="True"/></Grid>
-        <DataGrid x:Name="SearchGrid" Grid.Row="1" Margin="0,12"><DataGrid.Columns><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource VersionColumn}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
+        <DataGrid x:Name="SearchGrid" Grid.Row="1" Margin="0,12"><DataGrid.Columns><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource VersionColumn}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
         <Border Grid.Row="2" Background="#0F172A" BorderBrush="#253047" BorderThickness="1" CornerRadius="6" Padding="12"><ScrollViewer VerticalScrollBarVisibility="Auto"><TextBlock x:Name="SearchDescription" Text="{DynamicResource SearchIntro}" TextWrapping="Wrap" Foreground="#CBD5E1"/></ScrollViewer></Border>
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="InstallButton" Content="{DynamicResource InstallSelected}" MinWidth="145"/></StackPanel>
       </Grid></TabItem>
       <TabItem Header="{DynamicResource TabInstalled}"><Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid><TextBlock x:Name="InstalledCount" Text="{DynamicResource NotScanned}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="RefreshInstalledButton" Content="{DynamicResource Refresh}"/><Button x:Name="ExcludeInstalledButton" Content="{DynamicResource AddExclusion}" Background="#7C3AED"/><Button x:Name="ExportButton" Content="{DynamicResource ExportSelected}"/><Button x:Name="UninstallButton" Content="{DynamicResource RemoveChecked}" Background="#DC2626"/></StackPanel></Grid>
         <Grid Grid.Row="1" Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="320"/><ColumnDefinition/></Grid.ColumnDefinitions><TextBlock Text="{DynamicResource FilterList}" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#CBD5E1"/><TextBox x:Name="InstalledFilterBox" Grid.Column="1" ToolTip="{DynamicResource FilterTip}"/></Grid>
-        <DataGrid x:Name="InstalledGrid" Grid.Row="2" Margin="0,10"><DataGrid.Columns><DataGridTemplateColumn Header="{DynamicResource Select}" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource VersionColumn}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
+        <DataGrid x:Name="InstalledGrid" Grid.Row="2" Margin="0,10"><DataGrid.Columns><DataGridTemplateColumn Header="{DynamicResource Select}" HeaderStyle="{StaticResource CenteredDataGridColumnHeader}" Width="60"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource VersionColumn}" Binding="{Binding Version}" Width="*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
         <TextBlock Grid.Row="3" Text="{DynamicResource InstalledHint}" Foreground="#94A3B8"/>
       </Grid></TabItem>
       <TabItem Header="{DynamicResource TabImport}"><Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <Grid><TextBlock x:Name="ImportCount" Text="{DynamicResource ImportNotLoaded}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/><Button x:Name="ImportButton" Content="{DynamicResource ChooseBackup}" HorizontalAlignment="Right"/></Grid>
-        <DataGrid x:Name="ImportGrid" Grid.Row="1" Margin="0,12"><DataGrid.Columns><DataGridCheckBoxColumn Header="{DynamicResource Install}" Binding="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="60"/><DataGridTextColumn Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
+        <DataGrid x:Name="ImportGrid" Grid.Row="1" Margin="0,12"><DataGrid.Columns><DataGridCheckBoxColumn Header="{DynamicResource Install}" Binding="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="60"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Name}" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource PackageId}" Binding="{Binding Id}" Width="2*"/><DataGridTextColumn IsReadOnly="True" Header="{DynamicResource Source}" Binding="{Binding Source}" Width="*"/></DataGrid.Columns></DataGrid>
         <Button x:Name="InstallImportedButton" Grid.Row="2" Content="{DynamicResource InstallChecked}" HorizontalAlignment="Right" Background="#059669"/>
       </Grid></TabItem>
       <TabItem Header="{DynamicResource TabSettings}"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20,16" MaxWidth="650" HorizontalAlignment="Left">
@@ -1527,9 +1545,13 @@ $script:WebsiteLink.Add_RequestNavigate({
 })
 
 $script:InstalledContextMenu = [System.Windows.Controls.ContextMenu]::new()
+$script:ExcludeInstalledMenuItem = [System.Windows.Controls.MenuItem]::new()
+$script:ExcludeInstalledMenuItem.Header = Get-UiText 'AddExclusion'
 $script:UninstallSingleMenuItem = [System.Windows.Controls.MenuItem]::new()
 $script:UninstallSingleMenuItem.Header = Get-UiText 'RemoveSingle'
 [void]$script:InstalledContextMenu.Items.Add($script:UninstallSingleMenuItem)
+[void]$script:InstalledContextMenu.Items.Add([System.Windows.Controls.Separator]::new())
+[void]$script:InstalledContextMenu.Items.Add($script:ExcludeInstalledMenuItem)
 $script:InstalledGrid.ContextMenu = $script:InstalledContextMenu
 $script:InstalledGrid.Add_PreviewMouseRightButtonDown({
     try {
@@ -1538,6 +1560,7 @@ $script:InstalledGrid.Add_PreviewMouseRightButtonDown({
     } catch { }
 })
 $script:InstalledGrid.Add_ContextMenuOpening({
+    $script:ExcludeInstalledMenuItem.IsEnabled = [bool]$script:InstalledGrid.SelectedItem
     $script:UninstallSingleMenuItem.IsEnabled = [bool]$script:InstalledGrid.SelectedItem -and -not $script:ActionInProgress
 })
 $script:InstalledGrid.Add_PreviewMouseLeftButtonDown({ Select-RowOnCheckboxClick $script:InstalledGrid ([System.Windows.DependencyObject]$_.OriginalSource) })
@@ -1545,11 +1568,14 @@ $script:InstalledGrid.Add_PreviewMouseLeftButtonDown({ Select-RowOnCheckboxClick
 $script:UpgradeContextMenu = [System.Windows.Controls.ContextMenu]::new()
 $script:UpgradeSingleMenuItem = [System.Windows.Controls.MenuItem]::new()
 $script:UpgradeSingleMenuItem.Header = Get-UiText 'UpgradeSingle'
+$script:ExcludeUpgradeMenuItem = [System.Windows.Controls.MenuItem]::new()
+$script:ExcludeUpgradeMenuItem.Header = Get-UiText 'AddExclusion'
 $script:UninstallUpgradeMenuItem = [System.Windows.Controls.MenuItem]::new()
 $script:UninstallUpgradeMenuItem.Header = Get-UiText 'RemoveSingle'
 [void]$script:UpgradeContextMenu.Items.Add($script:UpgradeSingleMenuItem)
-[void]$script:UpgradeContextMenu.Items.Add([System.Windows.Controls.Separator]::new())
 [void]$script:UpgradeContextMenu.Items.Add($script:UninstallUpgradeMenuItem)
+[void]$script:UpgradeContextMenu.Items.Add([System.Windows.Controls.Separator]::new())
+[void]$script:UpgradeContextMenu.Items.Add($script:ExcludeUpgradeMenuItem)
 $script:UpgradeGrid.ContextMenu = $script:UpgradeContextMenu
 $script:UpgradeGrid.Add_PreviewMouseRightButtonDown({
     try {
@@ -1559,6 +1585,7 @@ $script:UpgradeGrid.Add_PreviewMouseRightButtonDown({
 })
 $script:UpgradeGrid.Add_ContextMenuOpening({
     $script:UpgradeSingleMenuItem.IsEnabled = [bool]$script:UpgradeGrid.SelectedItem -and -not $script:ActionInProgress
+    $script:ExcludeUpgradeMenuItem.IsEnabled = [bool]$script:UpgradeGrid.SelectedItem
     $script:UninstallUpgradeMenuItem.IsEnabled = [bool]$script:UpgradeGrid.SelectedItem -and -not $script:ActionInProgress
 })
 $script:UpgradeGrid.Add_PreviewMouseLeftButtonDown({ Select-RowOnCheckboxClick $script:UpgradeGrid ([System.Windows.DependencyObject]$_.OriginalSource) })
@@ -1616,6 +1643,8 @@ $script:UpgradeFilterBox.Add_TextChanged({ Apply-PackageListFilter Upgrade })
 $script:InstalledFilterBox.Add_TextChanged({ Apply-PackageListFilter Installed })
 $script:ExcludeUpgradeButton.Add_Click({ Add-PackagesToExclusions -Grid $script:UpgradeGrid -ListKind Upgrade })
 $script:ExcludeInstalledButton.Add_Click({ Add-PackagesToExclusions -Grid $script:InstalledGrid -ListKind Installed })
+$script:ExcludeUpgradeMenuItem.Add_Click({ Add-PackagesToExclusions -Grid $script:UpgradeGrid -ListKind Upgrade -SelectedItemOnly })
+$script:ExcludeInstalledMenuItem.Add_Click({ Add-PackagesToExclusions -Grid $script:InstalledGrid -ListKind Installed -SelectedItemOnly })
 $script:UpgradeSelectedButton.Add_Click({
     $selected = @($script:UpgradeApps | Where-Object Selected)
     if (-not $selected.Count) { Set-Status (Get-UiText 'SelectUpgrade') $true; return }
