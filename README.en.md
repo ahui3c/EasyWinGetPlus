@@ -6,7 +6,12 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.4**
+Current version: **0.1.5**
+
+## What's new in 0.1.5
+
+- Fixed the packaged PowerShell script missing a UTF-8 BOM, which made Windows PowerShell 5.1 interpret Traditional Chinese as ANSI and fail during parsing
+- Added a packaged-script encoding test that extracts the resource from the EXE and validates its BOM, Traditional Chinese text, and PowerShell syntax
 
 ## What's new in 0.1.4
 

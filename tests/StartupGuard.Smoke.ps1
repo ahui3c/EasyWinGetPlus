@@ -13,5 +13,6 @@ if ($launcherSource -notmatch 'CreateDiagnosticLog') { throw 'The launcher does 
 if ($launcherSource -notmatch 'Environment\.SpecialFolder\.LocalApplicationData') { throw 'The launcher diagnostic location is not user-writable.' }
 if ($launcherSource -notmatch 'EASYWINGETPLUS_EXECUTABLE') { throw 'The launcher does not expose its executable path to the online updater.' }
 if ($launcherSource -notmatch 'EASYWINGETPLUS_LAUNCHER_PID') { throw 'The launcher does not expose its process ID to the online updater.' }
+if ($launcherSource -notmatch 'new UTF8Encoding\(true\)') { throw 'The launcher does not emit a UTF-8 BOM for Windows PowerShell 5.1.' }
 
 'STARTUP_GUARD_SMOKE_OK'
