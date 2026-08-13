@@ -7,6 +7,7 @@ $iconPath = Join-Path $projectRoot 'assets\icons\EasyWinGetPlus.ico'
 $buildSource = Get-Content -LiteralPath (Join-Path $projectRoot 'build.ps1') -Raw
 $installerSource = Get-Content -LiteralPath (Join-Path $projectRoot 'installer\EasyWinGetPlus.iss') -Raw
 $applicationSource = Get-Content -LiteralPath (Join-Path $projectRoot 'EasyWinGetPlus.ps1') -Raw
+$launcherSource = Get-Content -LiteralPath (Join-Path $projectRoot 'src\EasyWinGetPlus.Launcher.cs') -Raw
 
 foreach ($path in @($pngPath, $iconPath)) {
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing application icon asset: $path" }
@@ -36,5 +37,18 @@ if ($buildSource -notmatch '/win32icon:\$iconPath') { throw 'The application bui
 if ($installerSource -notmatch 'SetupIconFile=.*EasyWinGetPlus\.ico') { throw 'The installer does not use the custom icon.' }
 if ($applicationSource -notmatch 'ExtractAssociatedIcon\(\$executablePath\)') { throw 'The WPF host does not load the launcher icon.' }
 if ($applicationSource -notmatch '\$script:Window\.Icon = Get-ApplicationIconImageSource') { throw 'The main WPF window does not use the application icon.' }
+if ($applicationSource -notmatch "SetCurrentProcessExplicitAppUserModelID\('Ahui3c\.EasyWinGetPlus'\)") { throw 'The PowerShell UI process does not set the application taskbar identity.' }
+if ($launcherSource -notmatch 'SetCurrentProcessExplicitAppUserModelID\(AppUserModelId\)') { throw 'The launcher does not set the application taskbar identity.' }
+if ($installerSource -notmatch 'AppUserModelID: "\{#MyAppUserModelId\}"') { throw 'The installed shortcuts do not share the application taskbar identity.' }
+
+$taskbarTypeSourceMatch = [regex]::Match(
+    $applicationSource,
+    "Add-Type -TypeDefinition @'(?<source>[\s\S]*?)'@"
+)
+if (-not $taskbarTypeSourceMatch.Success) { throw 'The taskbar identity interop source could not be extracted for runtime testing.' }
+Add-Type -TypeDefinition $taskbarTypeSourceMatch.Groups['source'].Value
+if (-not ('EasyWinGetPlus.TaskbarIdentity' -as [type])) { throw 'The taskbar identity interop type is not accessible to Windows PowerShell.' }
+$taskbarIdentityResult = [EasyWinGetPlus.TaskbarIdentity]::SetCurrentProcessExplicitAppUserModelID('Ahui3c.EasyWinGetPlus')
+if ($taskbarIdentityResult -ne 0) { throw ('Setting the taskbar identity failed with HRESULT 0x{0:X8}.' -f $taskbarIdentityResult) }
 
 'ICON_ASSETS_SMOKE_OK'

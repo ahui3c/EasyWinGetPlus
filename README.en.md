@@ -6,7 +6,12 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.9**
+Current version: **0.1.10**
+
+## What's new in 0.1.10
+
+- Fixed Windows 11 using the PowerShell host identity and icon for the running application
+- The launcher, PowerShell UI process, and installed shortcuts now share the Easy WinGet Plus AppUserModelID
 
 ## What's new in 0.1.9
 
@@ -29,8 +34,8 @@ Current version: **0.1.9**
 
 ## Download editions
 
-- **Portable:** Download the standalone `EasyWinGetPlus.exe`, or extract `EasyWinGetPlus-v0.1.9-win-x64.zip`. Settings and logs stay beside the application.
-- **Installer:** Run `EasyWinGetPlus-v0.1.9-Setup-x64.exe`. The app is installed under Program Files, while per-user settings and logs are stored under `%LOCALAPPDATA%\EasyWinGetPlus`.
+- **Portable:** Download the standalone `EasyWinGetPlus.exe`, or extract `EasyWinGetPlus-v0.1.10-win-x64.zip`. Settings and logs stay beside the application.
+- **Installer:** Run `EasyWinGetPlus-v0.1.10-Setup-x64.exe`. The app is installed under Program Files, while per-user settings and logs are stored under `%LOCALAPPDATA%\EasyWinGetPlus`.
 
 ## What's new in 0.1.6
 

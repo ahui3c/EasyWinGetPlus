@@ -6,7 +6,12 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 
 **完全免費、無廣告，並以開放原始碼方式提供。**
 
-目前版本：**0.1.9**
+目前版本：**0.1.10**
+
+## 0.1.10 更新簡述
+
+- 修正 Windows 11 依照 PowerShell 主控程序身分顯示錯誤工作列圖示的問題
+- 啟動器、PowerShell UI 程序及安裝版捷徑現在使用相同的 Easy WinGet Plus AppUserModelID
 
 ## 0.1.9 更新簡述
 
@@ -29,8 +34,8 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 
 ## 下載版本
 
-- **可攜版**：下載單一 `EasyWinGetPlus.exe`，或下載 `EasyWinGetPlus-v0.1.9-win-x64.zip` 解壓後執行。設定與 Log 儲存在程式旁，適合隨身碟或免安裝使用。
-- **安裝版**：下載 `EasyWinGetPlus-v0.1.9-Setup-x64.exe`。程式安裝至 Program Files，使用者設定與 Log 儲存在 `%LOCALAPPDATA%\EasyWinGetPlus`，並提供開始功能表、桌面捷徑選項與解除安裝。
+- **可攜版**：下載單一 `EasyWinGetPlus.exe`，或下載 `EasyWinGetPlus-v0.1.10-win-x64.zip` 解壓後執行。設定與 Log 儲存在程式旁，適合隨身碟或免安裝使用。
+- **安裝版**：下載 `EasyWinGetPlus-v0.1.10-Setup-x64.exe`。程式安裝至 Program Files，使用者設定與 Log 儲存在 `%LOCALAPPDATA%\EasyWinGetPlus`，並提供開始功能表、桌面捷徑選項與解除安裝。
 
 ## 0.1.6 更新簡述
 

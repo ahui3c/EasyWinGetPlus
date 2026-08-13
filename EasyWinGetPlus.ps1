@@ -7,6 +7,24 @@ Settings and exclusions use a portable JSON file beside this script.
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Drawing
 
+Add-Type -TypeDefinition @'
+using System.Runtime.InteropServices;
+
+namespace EasyWinGetPlus
+{
+    public static class TaskbarIdentity
+    {
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        public static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
+    }
+}
+'@
+
+$taskbarIdentityResult = [EasyWinGetPlus.TaskbarIdentity]::SetCurrentProcessExplicitAppUserModelID('Ahui3c.EasyWinGetPlus')
+if ($taskbarIdentityResult -ne 0) {
+    throw ('Could not set the Easy WinGet Plus taskbar identity. HRESULT: 0x{0:X8}' -f $taskbarIdentityResult)
+}
+
 $script:AppName = 'Easy WinGet Plus'
 $singleInstanceCreated = $false
 $script:SingleInstanceMutex = [System.Threading.Mutex]::new(
@@ -32,7 +50,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.9'
+$script:AppVersion = '0.1.10'
 $script:InstalledMode = $env:EASYWINGETPLUS_INSTALLED -eq '1'
 $script:DataDirectory = if ($script:InstalledMode) {
     Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus'

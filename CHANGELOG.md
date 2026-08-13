@@ -1,5 +1,23 @@
 # Changelog / 更新紀錄
 
+## 0.1.10 — 2026-08-13
+
+Windows taskbar identity fix / Windows 工作列身分修正
+
+- Assign an explicit AppUserModelID before the launcher or PowerShell host displays any UI
+- Use the same taskbar identity for installed Start menu and desktop shortcuts
+- Keep the embedded application icon assigned to every WPF window
+- Expose the taskbar identity interop type publicly for Windows PowerShell 5.1 compatibility
+
+---
+
+- 在啟動器或 PowerShell 主控程序顯示任何介面前設定明確的 AppUserModelID
+- 開始功能表與桌面捷徑使用相同的工作列身分
+- 所有 WPF 視窗繼續明確載入程式內嵌圖示
+- 將工作列識別互通型別公開，確保 Windows PowerShell 5.1 可以呼叫
+
+---
+
 ## 0.1.9 — 2026-08-13
 
 Taskbar window icon fix / 工作列視窗圖示修正
