@@ -6,7 +6,13 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 
 **完全免費、無廣告，並以開放原始碼方式提供。**
 
-目前版本：**0.1.7**
+目前版本：**0.1.8**
+
+## 0.1.8 更新簡述
+
+- 採用藍色套件盒與下載箭頭作為 Easy WinGet Plus 正式圖示
+- 圖示已套用至主程式、安裝精靈、開始功能表、桌面捷徑及解除安裝顯示
+- 提供透明 PNG 主圖與包含 16px 至 256px 的 Windows 多尺寸 ICO
 
 ## 0.1.7 更新簡述
 
@@ -18,8 +24,8 @@ Easy WinGet Plus 是一套可攜式 Windows 圖形化軟體管理工具，使用
 
 ## 下載版本
 
-- **可攜版**：下載單一 `EasyWinGetPlus.exe`，或下載 `EasyWinGetPlus-v0.1.7-win-x64.zip` 解壓後執行。設定與 Log 儲存在程式旁，適合隨身碟或免安裝使用。
-- **安裝版**：下載 `EasyWinGetPlus-v0.1.7-Setup-x64.exe`。程式安裝至 Program Files，使用者設定與 Log 儲存在 `%LOCALAPPDATA%\EasyWinGetPlus`，並提供開始功能表、桌面捷徑選項與解除安裝。
+- **可攜版**：下載單一 `EasyWinGetPlus.exe`，或下載 `EasyWinGetPlus-v0.1.8-win-x64.zip` 解壓後執行。設定與 Log 儲存在程式旁，適合隨身碟或免安裝使用。
+- **安裝版**：下載 `EasyWinGetPlus-v0.1.8-Setup-x64.exe`。程式安裝至 Program Files，使用者設定與 Log 儲存在 `%LOCALAPPDATA%\EasyWinGetPlus`，並提供開始功能表、桌面捷徑選項與解除安裝。
 
 ## 0.1.6 更新簡述
 
