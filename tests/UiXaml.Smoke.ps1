@@ -13,6 +13,8 @@ $tabs = $window.FindName('MainTabs')
 if (-not $tabs -or $tabs.Items.Count -ne 5) { throw 'The main tab control did not load correctly.' }
 $onlineUpdateButton = $window.FindName('OnlineUpdateButton')
 if (-not $onlineUpdateButton) { throw 'The About popup online-update button did not load.' }
+$openLogFolderButton = $window.FindName('OpenLogFolderButton')
+if (-not $openLogFolderButton) { throw 'The Settings runtime-log button did not load.' }
 
 $upgradeGrid = $window.FindName('UpgradeGrid')
 $searchGrid = $window.FindName('SearchGrid')

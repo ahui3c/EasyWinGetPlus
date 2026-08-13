@@ -6,7 +6,20 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.6**
+Current version: **0.1.7**
+
+## What's new in 0.1.7
+
+- Fixed localized Windows environments where Winget encoding or column-name differences could make every scan appear to return zero results
+- Captured Winget output is decoded as UTF-8 and parsed with a language-independent ordinal fallback
+- Unrecognized output now reports a real parsing error instead of a misleading successful zero-result scan
+- Added daily runtime diagnostic logs and an Open log folder button under Settings
+- Releases now include both a portable edition and a complete installer with Start menu, optional desktop shortcut, and standard uninstall support
+
+## Download editions
+
+- **Portable:** Download the standalone `EasyWinGetPlus.exe`, or extract `EasyWinGetPlus-v0.1.7-win-x64.zip`. Settings and logs stay beside the application.
+- **Installer:** Run `EasyWinGetPlus-v0.1.7-Setup-x64.exe`. The app is installed under Program Files, while per-user settings and logs are stored under `%LOCALAPPDATA%\EasyWinGetPlus`.
 
 ## What's new in 0.1.6
 
