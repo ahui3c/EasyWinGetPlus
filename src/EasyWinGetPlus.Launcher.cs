@@ -11,12 +11,12 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("廖阿輝")]
 [assembly: AssemblyProduct("Easy WinGet Plus")]
 [assembly: AssemblyCopyright("Copyright © 2026 廖阿輝")]
-[assembly: AssemblyVersion("0.1.8.0")]
-[assembly: AssemblyFileVersion("0.1.8.0")]
+[assembly: AssemblyVersion("0.1.9.0")]
+[assembly: AssemblyFileVersion("0.1.9.0")]
 
 internal static class Program
 {
-    private const string Version = "0.1.8";
+    private const string Version = "0.1.9";
     private const string ResourceName = "EasyWinGetPlus.ps1";
 
     private static void ExtractResource(string resourceName, string destinationPath)

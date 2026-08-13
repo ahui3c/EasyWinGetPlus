@@ -24,7 +24,7 @@ $scriptPath = Join-Path $projectRoot 'installer\EasyWinGetPlus.iss'
 & $CompilerPath $scriptPath
 if ($LASTEXITCODE -ne 0) { throw "Installer build failed with compiler exit code $LASTEXITCODE." }
 
-$outputPath = Join-Path $projectRoot 'release\EasyWinGetPlus-v0.1.8-Setup-x64.exe'
+$outputPath = Join-Path $projectRoot 'release\EasyWinGetPlus-v0.1.9-Setup-x64.exe'
 if (-not (Test-Path -LiteralPath $outputPath)) { throw 'The installer compiler did not create the expected setup file.' }
 $file = Get-Item -LiteralPath $outputPath
 Write-Host "Built $($file.FullName) ($($file.Length) bytes)" -ForegroundColor Green

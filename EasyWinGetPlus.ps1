@@ -5,7 +5,7 @@ Easy WinGet Plus - a dependency-free WPF front end for Windows Package Manager.
 Settings and exclusions use a portable JSON file beside this script.
 #>
 
-Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Drawing
 
 $script:AppName = 'Easy WinGet Plus'
 $singleInstanceCreated = $false
@@ -32,7 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.8'
+$script:AppVersion = '0.1.9'
 $script:InstalledMode = $env:EASYWINGETPLUS_INSTALLED -eq '1'
 $script:DataDirectory = if ($script:InstalledMode) {
     Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus'
@@ -99,6 +99,29 @@ function Format-LogText {
 
 Initialize-AppLogging
 Write-AppLog ("Startup version={0}; OS={1}; PowerShell={2}; DataDirectory={3}" -f $script:AppVersion, [Environment]::OSVersion.VersionString, $PSVersionTable.PSVersion, $script:DataDirectory)
+
+function Get-ApplicationIconImageSource {
+    $executablePath = [string]$env:EASYWINGETPLUS_EXECUTABLE
+    if ([string]::IsNullOrWhiteSpace($executablePath) -or -not (Test-Path -LiteralPath $executablePath)) { return $null }
+    try {
+        $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($executablePath)
+        if (-not $icon) { return $null }
+        try {
+            $source = [System.Windows.Interop.Imaging]::CreateBitmapSourceFromHIcon(
+                $icon.Handle,
+                [System.Windows.Int32Rect]::Empty,
+                [System.Windows.Media.Imaging.BitmapSizeOptions]::FromEmptyOptions()
+            )
+            $source.Freeze()
+            $source
+        } finally {
+            $icon.Dispose()
+        }
+    } catch {
+        Write-AppLog ("Could not load the application window icon: {0}" -f $_.Exception.Message) 'WARN'
+        $null
+    }
+}
 
 $script:Translations = @{
     'zh-TW' = @{
@@ -193,6 +216,7 @@ function Apply-InterfaceLanguage {
 
 function Show-FirstRunLanguageDialog {
     $dialog = [System.Windows.Window]::new()
+    $dialog.Icon = Get-ApplicationIconImageSource
     $dialog.Title = 'Easy WinGet Plus'
     $dialog.Width = 460
     $dialog.Height = 250
@@ -981,6 +1005,7 @@ function Show-ActionErrorReport {
     param([Parameter(Mandatory)][string]$Message)
 
     $reportWindow = [System.Windows.Window]::new()
+    $reportWindow.Icon = if ($script:Window -and $script:Window.Icon) { $script:Window.Icon } else { Get-ApplicationIconImageSource }
     $reportWindow.Title = Get-UiText 'ErrorReportTitle'
     $reportWindow.Width = 720
     $reportWindow.Height = 480
@@ -1591,6 +1616,7 @@ $script:Winget = Find-Winget
 
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $script:Window = [Windows.Markup.XamlReader]::Load($reader)
+$script:Window.Icon = Get-ApplicationIconImageSource
 foreach ($name in @('StatusText','ClearStatusButton','BusyProgress','ActionProgressPanel','ActionProgressText','ActionProgressBar','MainTabs','AboutButton','AboutPopup','CloseAboutButton','OnlineUpdateButton','HeaderVersionText','AboutVersionText','EmailLink','WebsiteLink','WingetBadge','WingetBadgeText','SearchBox','SearchButton','SearchGrid','SearchDescription','InstallButton','UpgradeCount','UpgradeFilterBox','RefreshUpgradeButton','ExcludeUpgradeButton','UpgradeSelectedButton','UpgradeAllButton','UpgradeGrid','InstalledCount','InstalledFilterBox','RefreshInstalledButton','ExcludeInstalledButton','ExportButton','UninstallButton','InstalledGrid','ImportCount','ImportButton','ImportGrid','InstallImportedButton','InterfaceLanguageCombo','SilentInstallCheck','SilentUpgradeCheck','HideActionWindowsCheck','AutoTranslateCheck','LanguageCombo','ClearExclusionsButton','SettingsPathText','LogPathText','OpenLogFolderButton')) {
     Set-Variable -Scope Script -Name $name -Value $script:Window.FindName($name)
 }

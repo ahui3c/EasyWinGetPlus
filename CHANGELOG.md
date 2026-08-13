@@ -1,5 +1,19 @@
 # Changelog / 更新紀錄
 
+## 0.1.9 — 2026-08-13
+
+Taskbar window icon fix / 工作列視窗圖示修正
+
+- Load the embedded launcher icon into WPF windows hosted by Windows PowerShell
+- Prevent the main window, first-run language dialog, and error report from displaying the PowerShell icon on the taskbar
+
+---
+
+- 將啟動器內嵌圖示載入由 Windows PowerShell 承載的 WPF 視窗
+- 修正主視窗、首次語言選擇及錯誤報告在工作列錯誤顯示 PowerShell 圖示的問題
+
+---
+
 ## 0.1.8 — 2026-08-13
 
 Application identity icon / 應用程式識別圖示
