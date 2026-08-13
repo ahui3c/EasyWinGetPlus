@@ -15,7 +15,8 @@ if (-not (Test-Path -LiteralPath $compiler)) {
 
 $scriptPath = Join-Path $PSScriptRoot 'EasyWinGetPlus.ps1'
 $launcherPath = Join-Path $PSScriptRoot 'src\EasyWinGetPlus.Launcher.cs'
-if (-not (Test-Path -LiteralPath $scriptPath) -or -not (Test-Path -LiteralPath $launcherPath)) {
+$iconPath = Join-Path $PSScriptRoot 'assets\icons\EasyWinGetPlus.ico'
+if (-not (Test-Path -LiteralPath $scriptPath) -or -not (Test-Path -LiteralPath $launcherPath) -or -not (Test-Path -LiteralPath $iconPath)) {
     throw 'Required source files are missing.'
 }
 
@@ -24,6 +25,7 @@ $outputPath = Join-Path $OutputDirectory 'EasyWinGetPlus.exe'
 
 & $compiler /nologo /target:winexe /platform:anycpu /optimize+ `
     /reference:System.dll /reference:System.Windows.Forms.dll `
+    "/win32icon:$iconPath" `
     "/resource:$scriptPath,EasyWinGetPlus.ps1" `
     "/out:$outputPath" `
     $launcherPath

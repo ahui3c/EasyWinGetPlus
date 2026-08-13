@@ -8,6 +8,7 @@ foreach ($required in @(
     'DefaultDirName={autopf64}\Easy WinGet Plus',
     'PrivilegesRequired=admin',
     'ArchitecturesInstallIn64BitMode=x64compatible',
+    'SetupIconFile=..\assets\icons\EasyWinGetPlus.ico',
     'EasyWinGetPlus.installed',
     '[UninstallDelete]',
     '{autodesktop}',

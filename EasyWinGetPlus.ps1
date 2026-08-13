@@ -32,7 +32,7 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.7'
+$script:AppVersion = '0.1.8'
 $script:InstalledMode = $env:EASYWINGETPLUS_INSTALLED -eq '1'
 $script:DataDirectory = if ($script:InstalledMode) {
     Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus'

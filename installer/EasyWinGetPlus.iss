@@ -1,5 +1,5 @@
 #define MyAppName "Easy WinGet Plus"
-#define MyAppVersion "0.1.7"
+#define MyAppVersion "0.1.8"
 #define MyAppPublisher "廖阿輝"
 #define MyAppURL "https://github.com/ahui3c/EasyWinGetPlus"
 #define MyAppExeName "EasyWinGetPlus.exe"
@@ -19,6 +19,7 @@ DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
 OutputDir=..\release
 OutputBaseFilename=EasyWinGetPlus-v{#MyAppVersion}-Setup-x64
+SetupIconFile=..\assets\icons\EasyWinGetPlus.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/max
 SolidCompression=yes

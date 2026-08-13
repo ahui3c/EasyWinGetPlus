@@ -1,5 +1,21 @@
 # Changelog / 更新紀錄
 
+## 0.1.8 — 2026-08-13
+
+Application identity icon / 應用程式識別圖示
+
+- Add a custom blue package-and-download icon based on concept 01
+- Provide a transparent 1024-pixel PNG master and a multi-size Windows ICO
+- Embed the icon into the portable executable and use it for Setup, shortcuts, and uninstall display
+
+---
+
+- 採用第 1 組藍色套件與下載箭頭圖示
+- 提供透明背景 1024px PNG 主圖及 Windows 多尺寸 ICO
+- 將圖示嵌入可攜版 EXE，並套用至安裝程式、捷徑及解除安裝顯示
+
+---
+
 ## 0.1.7 — 2026-08-13
 
 Winget data collection and runtime diagnostics / Winget 資料收集與運行診斷修正

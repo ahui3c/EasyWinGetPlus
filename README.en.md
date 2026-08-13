@@ -6,7 +6,13 @@ Easy WinGet Plus is a portable graphical software manager for Windows. It uses t
 
 **Free to use, ad-free, and open source.**
 
-Current version: **0.1.7**
+Current version: **0.1.8**
+
+## What's new in 0.1.8
+
+- Adopted the blue package-and-download design as the official Easy WinGet Plus icon
+- Applied the icon to the main executable, Setup wizard, Start menu, desktop shortcut, and uninstall display
+- Added a transparent PNG master and a multi-size Windows ICO covering 16px through 256px
 
 ## What's new in 0.1.7
 
@@ -18,8 +24,8 @@ Current version: **0.1.7**
 
 ## Download editions
 
-- **Portable:** Download the standalone `EasyWinGetPlus.exe`, or extract `EasyWinGetPlus-v0.1.7-win-x64.zip`. Settings and logs stay beside the application.
-- **Installer:** Run `EasyWinGetPlus-v0.1.7-Setup-x64.exe`. The app is installed under Program Files, while per-user settings and logs are stored under `%LOCALAPPDATA%\EasyWinGetPlus`.
+- **Portable:** Download the standalone `EasyWinGetPlus.exe`, or extract `EasyWinGetPlus-v0.1.8-win-x64.zip`. Settings and logs stay beside the application.
+- **Installer:** Run `EasyWinGetPlus-v0.1.8-Setup-x64.exe`. The app is installed under Program Files, while per-user settings and logs are stored under `%LOCALAPPDATA%\EasyWinGetPlus`.
 
 ## What's new in 0.1.6
 
