@@ -1,5 +1,31 @@
 # Changelog / 更新紀錄
 
+## 0.1.7 — 2026-08-13
+
+Winget data collection and runtime diagnostics / Winget 資料收集與運行診斷修正
+
+- Decode captured Winget standard output and error output as UTF-8
+- Parse package columns by stable ordinal positions when localized header names are unknown
+- Accept both ASCII and Unicode Winget table separators
+- Treat unrecognized successful output as a parsing error instead of reporting a misleading zero-result scan
+- Write daily runtime logs for startup, Winget commands, exit codes, output summaries, and errors
+- Add an Open log folder button to Settings; retain logs for 14 days and fall back to LocalAppData when the app directory is not writable
+- Provide a complete per-machine installer alongside the portable EXE and ZIP, including shortcuts and standard uninstall support
+- Store installed-edition settings and logs under LocalAppData while preserving beside-the-EXE storage for portable use
+
+---
+
+- 強制使用 UTF-8 解碼 Winget 標準輸出與錯誤輸出
+- 無法識別本地化欄名時，依 Winget 穩定的欄位順序解析套件資料
+- 同時支援 ASCII 與 Unicode Winget 表格分隔線
+- 成功執行但輸出格式無法辨識時改為明確解析錯誤，不再誤報掃描結果為零筆
+- 每日記錄啟動資訊、Winget 命令、結束碼、輸出摘要與錯誤
+- 設定頁新增「開啟 Log 資料夾」；Log 保留 14 天，程式目錄不可寫入時自動改存 LocalAppData
+- 除可攜 EXE 與 ZIP 外，同時提供完整的電腦安裝版本，包含捷徑與標準解除安裝功能
+- 安裝版設定與 Log 儲存在 LocalAppData，可攜版則繼續儲存在 EXE 旁
+
+---
+
 ## 0.1.6 — 2026-08-12
 
 Read-only package lists and column alignment / 唯讀套件清單與欄位對齊

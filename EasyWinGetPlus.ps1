@@ -32,10 +32,20 @@ try {
     if ($buffer.Width -lt 240) { $buffer.Width = 240; $Host.UI.RawUI.BufferSize = $buffer }
 } catch { }
 
-$script:AppVersion = '0.1.6'
-$script:DataDirectory = if ($env:EASYWINGETPLUS_HOME) { $env:EASYWINGETPLUS_HOME } else { $PSScriptRoot }
+$script:AppVersion = '0.1.7'
+$script:InstalledMode = $env:EASYWINGETPLUS_INSTALLED -eq '1'
+$script:DataDirectory = if ($script:InstalledMode) {
+    Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus'
+} elseif ($env:EASYWINGETPLUS_HOME) {
+    $env:EASYWINGETPLUS_HOME
+} else {
+    $PSScriptRoot
+}
+if (-not (Test-Path -LiteralPath $script:DataDirectory)) { New-Item -ItemType Directory -Path $script:DataDirectory -Force | Out-Null }
 $script:SettingsPath = Join-Path $script:DataDirectory 'EasyWinGetPlus.settings.json'
 $script:LegacySettingsPath = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'settings.json'
+$script:LogDirectory = $null
+$script:LogPath = $null
 $script:Settings = $null
 $script:Winget = $null
 $script:SearchResults = @()
@@ -45,6 +55,50 @@ $script:ImportedApps = @()
 $script:AsyncOperations = [System.Collections.ArrayList]::new()
 $script:ActionInProgress = $false
 $script:ReleaseApiUri = 'https://api.github.com/repos/ahui3c/EasyWinGetPlus/releases/latest'
+
+function Initialize-AppLogging {
+    $preferredDirectory = Join-Path $script:DataDirectory 'Logs'
+    $fallbackDirectory = Join-Path (Join-Path $env:LOCALAPPDATA 'EasyWinGetPlus') 'Logs'
+    foreach ($directory in @($preferredDirectory, $fallbackDirectory)) {
+        try {
+            New-Item -ItemType Directory -Path $directory -Force -ErrorAction Stop | Out-Null
+            $probe = Join-Path $directory ('.write-probe-{0}.tmp' -f [guid]::NewGuid().ToString('N'))
+            [IO.File]::WriteAllText($probe, 'ok')
+            Remove-Item -LiteralPath $probe -Force
+            $script:LogDirectory = $directory
+            $script:LogPath = Join-Path $directory ('EasyWinGetPlus-{0}.log' -f (Get-Date -Format 'yyyyMMdd'))
+            break
+        } catch { }
+    }
+    if (-not $script:LogPath) { return }
+    try {
+        Get-ChildItem -LiteralPath $script:LogDirectory -Filter 'EasyWinGetPlus-*.log' -File -ErrorAction SilentlyContinue |
+            Where-Object LastWriteTime -lt (Get-Date).AddDays(-14) | Remove-Item -Force -ErrorAction SilentlyContinue
+    } catch { }
+}
+
+function Write-AppLog {
+    param(
+        [Parameter(Mandatory)][string]$Message,
+        [ValidateSet('INFO','WARN','ERROR')][string]$Level = 'INFO'
+    )
+    if (-not $script:LogPath) { return }
+    try {
+        $line = '{0} [{1}] {2}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'), $Level, ($Message -replace "`r?`n", ' | ')
+        Add-Content -LiteralPath $script:LogPath -Value $line -Encoding UTF8 -ErrorAction Stop
+    } catch { }
+}
+
+function Format-LogText {
+    param([string]$Text, [int]$MaximumLength = 12000)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return '<empty>' }
+    $value = $Text.Trim()
+    if ($value.Length -gt $MaximumLength) { return $value.Substring(0, $MaximumLength) + ' ...<truncated>' }
+    $value
+}
+
+Initialize-AppLogging
+Write-AppLog ("Startup version={0}; OS={1}; PowerShell={2}; DataDirectory={3}" -f $script:AppVersion, [Environment]::OSVersion.VersionString, $PSVersionTable.PSVersion, $script:DataDirectory)
 
 $script:Translations = @{
     'zh-TW' = @{
@@ -59,7 +113,7 @@ $script:Translations = @{
         InstallUpdate='安裝與更新'; SilentInstall='安裝時使用靜默模式（若套件支援）'; SilentUpgrade='更新時使用靜默全自動模式（若套件支援）'; HideActionWindows='隱藏安裝與更新執行視窗（在主畫面顯示狀態）'
         InterfaceLanguage='介面語言'; InterfaceLanguageHint='第一次啟動時會要求手動選擇，之後可在此隨時切換。'
         DescriptionTranslation='軟體說明翻譯'; AutoTranslate='選取搜尋結果時自動翻譯說明'; TargetLanguage='目標語言'; TranslationPrivacy='翻譯透過 MyMemory 公開服務完成；軟體說明文字會送至該服務。若離線或服務不可用，將保留原文。'
-        SharedExclusions='共用排除與隱藏項目'; ExclusionSettingsHint='軟體更新與已安裝程式管理共用同一份排除清單。清除後，程式會在下一次掃描時重新出現在兩邊清單中。'; ClearExclusions='清除所有排除項目'; DataLocation='資料位置'
+        SharedExclusions='共用排除與隱藏項目'; ExclusionSettingsHint='軟體更新與已安裝程式管理共用同一份排除清單。清除後，程式會在下一次掃描時重新出現在兩邊清單中。'; ClearExclusions='清除所有排除項目'; DataLocation='資料位置'; RuntimeLogs='運行診斷紀錄'; RuntimeLogsHint='自動記錄 Winget 命令、結束碼、輸出摘要與錯誤。回報問題時請附上最新的 Log 檔案；內容可能包含搜尋文字與套件名稱。'; OpenLogFolder='開啟 Log 資料夾'
         AboutPurpose='使用 Windows 內建 Winget 搜尋、安裝、更新、移除與備份軟體清單。'; Author='作者'; Email='郵件'; Website='網站'; Ready='準備就緒'; ClearMessage='清除訊息'; RemoveSingle='單獨移除此程式'; UpgradeSingle='單獨升級此程式'
         InstalledCount='{0} 個可識別程式'; UpgradeCount='{0} 個可用更新'; FilteredInstalledCount='{0} / {1} 個可識別程式'; FilteredUpgradeCount='{0} / {1} 個可用更新'; ResultsFound='找到 {0} 筆結果。'; SelectForDescription='選取程式即可載入簡介。'; NoResults='找不到符合的程式。'
         BackgroundRunning='{0}（背景執行中，畫面仍可操作）'; ScanningInstalled='正在掃描已安裝程式…'; CheckingUpdates='正在檢查更新…'; ScanComplete='掃描完成，共 {0} 個可識別程式。'; UpdateComplete='更新檢查完成，共 {0} 個更新。'; Searching='正在搜尋「{0}」…'; LoadingDescription='正在背景載入說明，您可以繼續操作其他功能…'; DescriptionLoaded='軟體說明載入完成。'; LanguageChanged='介面語言已切換為繁體中文。'
@@ -81,7 +135,7 @@ $script:Translations = @{
         InstallUpdate='Installation and updates'; SilentInstall='Use silent mode when installing (if supported)'; SilentUpgrade='Use fully automatic silent updates (if supported)'; HideActionWindows='Hide installation and update windows (show status in the main window)'
         InterfaceLanguage='Interface language'; InterfaceLanguageHint='You choose the language manually on first launch and can change it here anytime.'
         DescriptionTranslation='App description translation'; AutoTranslate='Automatically translate the selected search result'; TargetLanguage='Target language'; TranslationPrivacy='Translations use the public MyMemory service. App description text is sent to that service; the original is kept when offline or unavailable.'
-        SharedExclusions='Shared exclusions and hidden apps'; ExclusionSettingsHint='Updates and Installed Apps use the same exclusion list. After clearing it, apps return to both lists on the next scan.'; ClearExclusions='Clear all exclusions'; DataLocation='Data location'
+        SharedExclusions='Shared exclusions and hidden apps'; ExclusionSettingsHint='Updates and Installed Apps use the same exclusion list. After clearing it, apps return to both lists on the next scan.'; ClearExclusions='Clear all exclusions'; DataLocation='Data location'; RuntimeLogs='Runtime diagnostic logs'; RuntimeLogsHint='Automatically records Winget commands, exit codes, output summaries, and errors. Attach the latest log when reporting a problem; it may contain search text and package names.'; OpenLogFolder='Open log folder'
         AboutPurpose='Use the built-in Windows Winget to search, install, update, remove, and back up app lists.'; Author='Author'; Email='Email'; Website='Website'; Ready='Ready'; ClearMessage='Clear message'; RemoveSingle='Remove this app'; UpgradeSingle='Upgrade this app'
         InstalledCount='{0} recognized apps'; UpgradeCount='{0} available updates'; FilteredInstalledCount='{0} / {1} recognized apps'; FilteredUpgradeCount='{0} / {1} available updates'; ResultsFound='{0} results found.'; SelectForDescription='Select an app to load its description.'; NoResults='No matching apps found.'
         BackgroundRunning='{0} (running in the background; the window remains responsive)'; ScanningInstalled='Scanning installed apps…'; CheckingUpdates='Checking for updates…'; ScanComplete='Scan complete: {0} recognized apps.'; UpdateComplete='Update check complete: {0} updates.'; Searching='Searching for “{0}”…'; LoadingDescription='Loading the description in the background. You can continue using the app…'; DescriptionLoaded='App description loaded.'; LanguageChanged='Interface language changed to English.'
@@ -244,9 +298,10 @@ function Save-AppSettings {
 
 function Find-Winget {
     $command = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if ($command) { return $command.Source }
+    if ($command) { Write-AppLog ("Winget found: {0}" -f $command.Source); return $command.Source }
     $candidate = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe'
-    if (Test-Path -LiteralPath $candidate) { return $candidate }
+    if (Test-Path -LiteralPath $candidate) { Write-AppLog ("Winget found: {0}" -f $candidate); return $candidate }
+    Write-AppLog 'Winget executable was not found.' 'ERROR'
     $null
 }
 
@@ -289,14 +344,21 @@ function Start-WingetQuery {
     )
     if (-not $script:Winget) { Show-Error (Get-UiText 'WingetRequired'); return }
     try {
+        $argumentText = ConvertTo-NativeArgumentString $Arguments
+        Write-AppLog ("Starting Winget: {0} {1}" -f $script:Winget, $argumentText)
         $info = [System.Diagnostics.ProcessStartInfo]::new()
         $info.FileName = $script:Winget
-        $info.Arguments = ConvertTo-NativeArgumentString $Arguments
+        $info.Arguments = $argumentText
         $info.UseShellExecute = [bool]$ShowWindow
         $info.CreateNoWindow = -not [bool]$ShowWindow
         $info.WindowStyle = if ($ShowWindow) { [System.Diagnostics.ProcessWindowStyle]::Normal } else { [System.Diagnostics.ProcessWindowStyle]::Hidden }
         $info.RedirectStandardOutput = -not [bool]$ShowWindow
         $info.RedirectStandardError = -not [bool]$ShowWindow
+        if (-not $ShowWindow) {
+            $utf8 = [System.Text.UTF8Encoding]::new($false)
+            $info.StandardOutputEncoding = $utf8
+            $info.StandardErrorEncoding = $utf8
+        }
         $process = [System.Diagnostics.Process]::new()
         $process.StartInfo = $info
         if (-not $process.Start()) { throw '無法啟動 winget。' }
@@ -304,12 +366,13 @@ function Start-WingetQuery {
             Kind = 'Process'; Activity = $Activity; Process = $process; CaptureOutput = -not [bool]$ShowWindow
             OutputTask = if ($ShowWindow) { $null } else { $process.StandardOutput.ReadToEndAsync() }
             ErrorTask = if ($ShowWindow) { $null } else { $process.StandardError.ReadToEndAsync() }
-            OnSuccess = $OnSuccess; OnFailure = $OnFailure; State = $State
+            OnSuccess = $OnSuccess; OnFailure = $OnFailure; State = $State; Command = ($script:Winget + ' ' + $argumentText)
         }
         [void]$script:AsyncOperations.Add($operation)
         Update-AsyncIndicator
         Set-Status (Get-UiText 'BackgroundRunning' @($Activity))
     } catch {
+        Write-AppLog ("Could not start Winget: {0}" -f $_.Exception) 'ERROR'
         if ($OnFailure) { & $OnFailure $_.Exception.Message $State } else { Show-Error $_.Exception.Message }
     }
 }
@@ -633,6 +696,7 @@ function Start-AsyncMonitor {
                     $stderr = if ($operation.CaptureOutput) { $operation.ErrorTask.Result } else { '' }
                     $operation.Process.Dispose()
                     $lines = @(($stdout -split "\r?\n") | Where-Object { $null -ne $_ })
+                    Write-AppLog ("Winget completed: exit={0}; command={1}; stdout={2}; stderr={3}" -f $exitCode, $operation.Command, (Format-LogText $stdout), (Format-LogText $stderr)) $(if ($exitCode -eq 0) { 'INFO' } else { 'ERROR' })
                     if ($exitCode -ne 0) {
                         $message = (($stderr, $stdout -join "`n").Trim())
                         if (-not $message) { $message = "winget 結束代碼：$exitCode" }
@@ -668,6 +732,7 @@ function Start-AsyncMonitor {
                     Complete-OnlineUpdateDownload $operation
                 }
             } catch {
+                Write-AppLog ("Async operation failed: activity={0}; error={1}" -f $operation.Activity, $_.Exception) 'ERROR'
                 if ($operation.Kind -eq 'Translation') {
                     $success = $operation.OnSuccess; & $success $operation.OriginalText $operation.State
                     try { $operation.Client.Dispose() } catch { }
@@ -685,7 +750,7 @@ function Start-AsyncMonitor {
 }
 
 function ConvertFrom-WingetTable {
-    param([string[]]$Lines)
+    param([string[]]$Lines, [string]$CommandName = 'query')
     # Be defensive about output captured from different winget/console builds.
     # Remove terminal colour/progress sequences and flatten accidental nesting.
     $ansiPattern = [char]27 + '\[[0-?]*[ -/]*[@-~]'
@@ -695,13 +760,21 @@ function ConvertFrom-WingetTable {
     })
     $separatorIndex = -1
     for ($i = 0; $i -lt $Lines.Count; $i++) {
-        if ($Lines[$i] -match '^\s*-{5,}\s*$' -or $Lines[$i] -match '^\s*-{2,}(\s+-{2,})+') { $separatorIndex = $i; break }
+        if ($Lines[$i] -match '^\s*[-─]{5,}\s*$' -or $Lines[$i] -match '^\s*[-─]{2,}(\s+[-─]{2,})+') { $separatorIndex = $i; break }
     }
-    if ($separatorIndex -lt 1) { return @() }
+    if ($separatorIndex -lt 1) {
+        $meaningful = @($Lines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and $_ -notmatch '^\s*[-\\|/]\s*$' })
+        $text = $meaningful -join "`n"
+        $noResultsPattern = '(?i)(no (installed )?package|no applicable (upgrade|update)|no available (upgrade|update)|no newer package|找不到.*套件|沒有.*(套件|更新)|無可用更新|未找到.*套件)'
+        if ($text -match $noResultsPattern) { return @() }
+        $preview = Format-LogText $text 1200
+        Write-AppLog ("Unrecognized Winget table for {0}: {1}" -f $CommandName, $preview) 'ERROR'
+        throw "無法解析 Winget 的 $CommandName 輸出，並非零筆結果。請開啟設定頁的 Log 資料夾並回報最新紀錄。"
+    }
 
     $header = $Lines[$separatorIndex - 1]
     $separator = $Lines[$separatorIndex]
-    $runs = [regex]::Matches($separator, '-+')
+    $runs = [regex]::Matches($separator, '[-─]+')
     # Newer winget builds use one continuous separator; older/localized builds
     # may use a dash run per column. Header positions work for both variants.
     $headerFields = [regex]::Matches($header, '\S(?:.*?\S)?(?=\s{2,}|$)')
@@ -734,11 +807,15 @@ function ConvertFrom-WingetTable {
 }
 
 function Get-Field {
-    param($Object, [string[]]$Names)
+    param($Object, [string[]]$Names, [int]$FallbackIndex = [int]::MinValue)
     foreach ($name in $Names) {
         $property = $Object.PSObject.Properties | Where-Object { $_.Name -eq $name } | Select-Object -First 1
         if ($property) { return [string]$property.Value }
     }
+    $properties = @($Object.PSObject.Properties)
+    if ($FallbackIndex -eq [int]::MinValue) { return '' }
+    if ($FallbackIndex -lt 0) { $FallbackIndex = $properties.Count + $FallbackIndex }
+    if ($FallbackIndex -ge 0 -and $FallbackIndex -lt $properties.Count) { return [string]$properties[$FallbackIndex].Value }
     ''
 }
 
@@ -751,11 +828,13 @@ function Test-PackageIsExcluded {
 function Convert-ToPackageRows {
     param([object[]]$Rows, [switch]$Upgrade)
     foreach ($row in $Rows) {
-        $name = Get-Field $row @('Name', '名稱')
-        $id = Get-Field $row @('Id', '識別碼')
-        $version = Get-Field $row @('Version', '版本')
-        $available = Get-Field $row @('Available', '可用')
-        $source = Get-Field $row @('Source', '來源')
+        # Column order is stable even when Winget localizes or changes the
+        # displayed header text. Use semantic names first, then ordinal fields.
+        $name = Get-Field $row @('Name', '名稱') 0
+        $id = Get-Field $row @('Id', '識別碼') 1
+        $version = Get-Field $row @('Version', '版本') 2
+        $available = if ($Upgrade) { Get-Field $row @('Available', '可用') 3 } else { Get-Field $row @('Available', '可用') }
+        $source = Get-Field $row @('Source', '來源') -1
         if (-not $id) { continue }
         [pscustomobject]@{
             Selected = $false
@@ -822,6 +901,7 @@ function Select-RowOnCheckboxClick {
 
 function Set-Status {
     param([string]$Message, [bool]$IsError = $false)
+    if ($IsError -and (Get-Command Write-AppLog -ErrorAction SilentlyContinue)) { Write-AppLog ("UI error: {0}" -f $Message) 'ERROR' }
     if (-not $script:StatusText) { return }
     $script:StatusText.Text = $Message
     $script:StatusText.Foreground = if ($IsError) { '#FFFCA5A5' } else { '#FFA7F3D0' }
@@ -1191,7 +1271,7 @@ function Start-SinglePackageUninstall {
 function Refresh-Installed {
     Start-WingetQuery @('list', '--accept-source-agreements', '--disable-interactivity') (Get-UiText 'ScanningInstalled') {
         param($lines)
-        $rows = ConvertFrom-WingetTable $lines
+        $rows = ConvertFrom-WingetTable $lines 'list'
         $script:InstalledApps = @(Convert-ToPackageRows $rows | Where-Object { -not $_.Excluded })
         $script:InstalledScanned = $true
         Apply-PackageListFilter Installed
@@ -1202,7 +1282,7 @@ function Refresh-Installed {
 function Refresh-Upgrades {
     Start-WingetQuery @('upgrade', '--accept-source-agreements', '--disable-interactivity', '--include-unknown') (Get-UiText 'CheckingUpdates') {
         param($lines)
-        $rows = ConvertFrom-WingetTable $lines
+        $rows = ConvertFrom-WingetTable $lines 'upgrade'
         $script:UpgradeApps = @(Convert-ToPackageRows $rows -Upgrade | Where-Object { -not $_.Excluded })
         $script:UpgradeScanned = $true
         Apply-PackageListFilter Upgrade
@@ -1217,7 +1297,7 @@ function Search-Packages {
     $searchCompleted = {
         param($lines, $responseQuery)
         if ($responseQuery -ne $script:LatestSearchQuery) { return }
-        $rows = ConvertFrom-WingetTable $lines
+        $rows = ConvertFrom-WingetTable $lines 'search'
         $script:SearchResults = @(Convert-ToPackageRows $rows)
         $script:SearchGrid.ItemsSource = $script:SearchResults
         $script:SearchDescription.Text = if ($script:SearchResults.Count) { Get-UiText 'SelectForDescription' } else { Get-UiText 'NoResults' }
@@ -1501,6 +1581,7 @@ $script:Winget = Find-Winget
         <TextBlock Text="{DynamicResource TranslationPrivacy}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,6,4,0"/>
         <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource SharedExclusions}" FontSize="20" FontWeight="Bold" Margin="0,0,0,6"/><TextBlock Text="{DynamicResource ExclusionSettingsHint}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,2,4,6"/><Button x:Name="ClearExclusionsButton" Content="{DynamicResource ClearExclusions}" Background="#DC2626" HorizontalAlignment="Left"/>
         <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource DataLocation}" FontSize="20" FontWeight="Bold"/><TextBlock x:Name="SettingsPathText" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,6"/>
+        <Separator Margin="0,12,0,10" Background="#334155"/><TextBlock Text="{DynamicResource RuntimeLogs}" FontSize="20" FontWeight="Bold"/><TextBlock Text="{DynamicResource RuntimeLogsHint}" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,6"/><TextBlock x:Name="LogPathText" Foreground="#94A3B8" TextWrapping="Wrap" Margin="4,2,4,8"/><Button x:Name="OpenLogFolderButton" Content="{DynamicResource OpenLogFolder}" HorizontalAlignment="Left"/>
       </StackPanel></ScrollViewer></TabItem>
     </TabControl>
     <Border Grid.Row="2" Margin="0,12,0,0" Background="#111827" CornerRadius="6" Padding="12,8"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions><TextBlock x:Name="StatusText" Text="{DynamicResource Ready}" Foreground="#A7F3D0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/><Button x:Name="ClearStatusButton" Grid.Column="1" Content="{DynamicResource ClearMessage}" Visibility="Collapsed" Margin="12,0" Padding="12,4" MinWidth="90" Background="#334155"/><ProgressBar x:Name="BusyProgress" Grid.Column="2" Height="5" IsIndeterminate="True" Foreground="#38BDF8" Background="#253047" Visibility="Collapsed"/><StackPanel x:Name="ActionProgressPanel" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,9,0,1" Visibility="Collapsed"><TextBlock x:Name="ActionProgressText" Foreground="#CBD5E1" FontSize="12" TextTrimming="CharacterEllipsis"/><ProgressBar x:Name="ActionProgressBar" Height="10" Margin="0,5,0,0" Minimum="0" Maximum="1" Value="0" Foreground="#22C55E" Background="#253047"/></StackPanel></Grid></Border>
@@ -1510,7 +1591,7 @@ $script:Winget = Find-Winget
 
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $script:Window = [Windows.Markup.XamlReader]::Load($reader)
-foreach ($name in @('StatusText','ClearStatusButton','BusyProgress','ActionProgressPanel','ActionProgressText','ActionProgressBar','MainTabs','AboutButton','AboutPopup','CloseAboutButton','OnlineUpdateButton','HeaderVersionText','AboutVersionText','EmailLink','WebsiteLink','WingetBadge','WingetBadgeText','SearchBox','SearchButton','SearchGrid','SearchDescription','InstallButton','UpgradeCount','UpgradeFilterBox','RefreshUpgradeButton','ExcludeUpgradeButton','UpgradeSelectedButton','UpgradeAllButton','UpgradeGrid','InstalledCount','InstalledFilterBox','RefreshInstalledButton','ExcludeInstalledButton','ExportButton','UninstallButton','InstalledGrid','ImportCount','ImportButton','ImportGrid','InstallImportedButton','InterfaceLanguageCombo','SilentInstallCheck','SilentUpgradeCheck','HideActionWindowsCheck','AutoTranslateCheck','LanguageCombo','ClearExclusionsButton','SettingsPathText')) {
+foreach ($name in @('StatusText','ClearStatusButton','BusyProgress','ActionProgressPanel','ActionProgressText','ActionProgressBar','MainTabs','AboutButton','AboutPopup','CloseAboutButton','OnlineUpdateButton','HeaderVersionText','AboutVersionText','EmailLink','WebsiteLink','WingetBadge','WingetBadgeText','SearchBox','SearchButton','SearchGrid','SearchDescription','InstallButton','UpgradeCount','UpgradeFilterBox','RefreshUpgradeButton','ExcludeUpgradeButton','UpgradeSelectedButton','UpgradeAllButton','UpgradeGrid','InstalledCount','InstalledFilterBox','RefreshInstalledButton','ExcludeInstalledButton','ExportButton','UninstallButton','InstalledGrid','ImportCount','ImportButton','ImportGrid','InstallImportedButton','InterfaceLanguageCombo','SilentInstallCheck','SilentUpgradeCheck','HideActionWindowsCheck','AutoTranslateCheck','LanguageCombo','ClearExclusionsButton','SettingsPathText','LogPathText','OpenLogFolderButton')) {
     Set-Variable -Scope Script -Name $name -Value $script:Window.FindName($name)
 }
 
@@ -1522,6 +1603,7 @@ $script:SilentUpgradeCheck.IsChecked = [bool]$script:Settings.SilentUpgrade
 $script:HideActionWindowsCheck.IsChecked = [bool]$script:Settings.HideActionWindows
 $script:AutoTranslateCheck.IsChecked = [bool]$script:Settings.AutoTranslate
 $script:SettingsPathText.Text = $script:SettingsPath
+$script:LogPathText.Text = $script:LogPath
 foreach ($item in $script:LanguageCombo.Items) { if ($item.Tag -eq $script:Settings.TargetLanguage) { $script:LanguageCombo.SelectedItem = $item; break } }
 if ($script:LanguageCombo.SelectedIndex -lt 0) { $script:LanguageCombo.SelectedIndex = 0 }
 foreach ($item in $script:InterfaceLanguageCombo.Items) { if ($item.Tag -eq $script:Settings.InterfaceLanguage) { $script:InterfaceLanguageCombo.SelectedItem = $item; break } }
@@ -1532,6 +1614,11 @@ Start-AsyncMonitor
 $script:AboutButton.Add_Click({ $script:AboutPopup.IsOpen = $true })
 $script:CloseAboutButton.Add_Click({ $script:AboutPopup.IsOpen = $false })
 $script:OnlineUpdateButton.Add_Click({ Start-OnlineUpdate })
+$script:OpenLogFolderButton.Add_Click({
+    if ($script:LogDirectory -and (Test-Path -LiteralPath $script:LogDirectory)) {
+        Start-Process -FilePath 'explorer.exe' -ArgumentList ('"{0}"' -f $script:LogDirectory)
+    }
+})
 $script:ClearStatusButton.Add_Click({ Set-Status (Get-UiText 'Ready') })
 $script:EmailLink.Add_RequestNavigate({
     param($sender, $eventArgs)
@@ -1728,6 +1815,7 @@ $script:Window.Add_ContentRendered({
     Refresh-Installed
 })
 $script:Window.Add_Closing({
+    Write-AppLog 'Application closing.'
     if ($script:AsyncTimer) { $script:AsyncTimer.Stop() }
     foreach ($operation in @($script:AsyncOperations)) {
         try {

@@ -7,16 +7,16 @@ using System.Threading;
 using System.Windows.Forms;
 
 [assembly: AssemblyTitle("Easy WinGet Plus")]
-[assembly: AssemblyDescription("A portable graphical interface for Windows Package Manager")]
+[assembly: AssemblyDescription("A graphical interface for Windows Package Manager")]
 [assembly: AssemblyCompany("廖阿輝")]
 [assembly: AssemblyProduct("Easy WinGet Plus")]
 [assembly: AssemblyCopyright("Copyright © 2026 廖阿輝")]
-[assembly: AssemblyVersion("0.1.6.0")]
-[assembly: AssemblyFileVersion("0.1.6.0")]
+[assembly: AssemblyVersion("0.1.7.0")]
+[assembly: AssemblyFileVersion("0.1.7.0")]
 
 internal static class Program
 {
-    private const string Version = "0.1.6";
+    private const string Version = "0.1.7";
     private const string ResourceName = "EasyWinGetPlus.ps1";
 
     private static void ExtractResource(string resourceName, string destinationPath)
@@ -130,6 +130,7 @@ internal static class Program
                 }
 
                 string executableDirectory = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+                bool installedMode = File.Exists(Path.Combine(executableDirectory, "EasyWinGetPlus.installed"));
                 string runtimeDirectory = Path.Combine(Path.GetTempPath(), "EasyWinGetPlus", Version);
                 string scriptPath = Path.Combine(runtimeDirectory, ResourceName);
                 string powerShellPath = Path.Combine(
@@ -157,6 +158,7 @@ internal static class Program
                     RedirectStandardError = true
                 };
                 startInfo.EnvironmentVariables["EASYWINGETPLUS_HOME"] = executableDirectory;
+                startInfo.EnvironmentVariables["EASYWINGETPLUS_INSTALLED"] = installedMode ? "1" : "0";
                 startInfo.EnvironmentVariables["EASYWINGETPLUS_EXECUTABLE"] = Application.ExecutablePath;
                 startInfo.EnvironmentVariables["EASYWINGETPLUS_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString();
 
