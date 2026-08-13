@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -11,13 +12,17 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("廖阿輝")]
 [assembly: AssemblyProduct("Easy WinGet Plus")]
 [assembly: AssemblyCopyright("Copyright © 2026 廖阿輝")]
-[assembly: AssemblyVersion("0.1.9.0")]
-[assembly: AssemblyFileVersion("0.1.9.0")]
+[assembly: AssemblyVersion("0.1.10.0")]
+[assembly: AssemblyFileVersion("0.1.10.0")]
 
 internal static class Program
 {
-    private const string Version = "0.1.9";
+    private const string Version = "0.1.10";
     private const string ResourceName = "EasyWinGetPlus.ps1";
+    private const string AppUserModelId = "Ahui3c.EasyWinGetPlus";
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
 
     private static void ExtractResource(string resourceName, string destinationPath)
     {
@@ -110,6 +115,10 @@ internal static class Program
     {
         try
         {
+            int appIdResult = SetCurrentProcessExplicitAppUserModelID(AppUserModelId);
+            if (appIdResult != 0)
+                Marshal.ThrowExceptionForHR(appIdResult);
+
             if (args.Length == 2 && String.Equals(args[0], "--extract-script", StringComparison.OrdinalIgnoreCase))
             {
                 ExtractResource(ResourceName, Path.GetFullPath(args[1]));

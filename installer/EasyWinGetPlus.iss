@@ -1,5 +1,6 @@
 #define MyAppName "Easy WinGet Plus"
-#define MyAppVersion "0.1.9"
+#define MyAppVersion "0.1.10"
+#define MyAppUserModelId "Ahui3c.EasyWinGetPlus"
 #define MyAppPublisher "廖阿輝"
 #define MyAppURL "https://github.com/ahui3c/EasyWinGetPlus"
 #define MyAppExeName "EasyWinGetPlus.exe"
@@ -47,9 +48,9 @@ Source: "..\dist\EasyWinGetPlus.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "EasyWinGetPlus.installed"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Easy WinGet Plus"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\Easy WinGet Plus"; Filename: "{app}\{#MyAppExeName}"; AppUserModelID: "{#MyAppUserModelId}"
 Name: "{group}\{cm:UninstallProgram,Easy WinGet Plus}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Easy WinGet Plus"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\Easy WinGet Plus"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; AppUserModelID: "{#MyAppUserModelId}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,Easy WinGet Plus}"; Flags: nowait postinstall skipifsilent
