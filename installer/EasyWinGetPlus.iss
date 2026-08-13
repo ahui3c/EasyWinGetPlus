@@ -1,5 +1,5 @@
 #define MyAppName "Easy WinGet Plus"
-#define MyAppVersion "0.1.8"
+#define MyAppVersion "0.1.9"
 #define MyAppPublisher "廖阿輝"
 #define MyAppURL "https://github.com/ahui3c/EasyWinGetPlus"
 #define MyAppExeName "EasyWinGetPlus.exe"

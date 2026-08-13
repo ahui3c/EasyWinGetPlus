@@ -6,6 +6,7 @@ $pngPath = Join-Path $projectRoot 'assets\icons\EasyWinGetPlus.png'
 $iconPath = Join-Path $projectRoot 'assets\icons\EasyWinGetPlus.ico'
 $buildSource = Get-Content -LiteralPath (Join-Path $projectRoot 'build.ps1') -Raw
 $installerSource = Get-Content -LiteralPath (Join-Path $projectRoot 'installer\EasyWinGetPlus.iss') -Raw
+$applicationSource = Get-Content -LiteralPath (Join-Path $projectRoot 'EasyWinGetPlus.ps1') -Raw
 
 foreach ($path in @($pngPath, $iconPath)) {
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing application icon asset: $path" }
@@ -33,5 +34,7 @@ foreach ($requiredSize in @(16,20,24,32,40,48,64,128,256)) {
 
 if ($buildSource -notmatch '/win32icon:\$iconPath') { throw 'The application build does not embed the custom icon.' }
 if ($installerSource -notmatch 'SetupIconFile=.*EasyWinGetPlus\.ico') { throw 'The installer does not use the custom icon.' }
+if ($applicationSource -notmatch 'ExtractAssociatedIcon\(\$executablePath\)') { throw 'The WPF host does not load the launcher icon.' }
+if ($applicationSource -notmatch '\$script:Window\.Icon = Get-ApplicationIconImageSource') { throw 'The main WPF window does not use the application icon.' }
 
 'ICON_ASSETS_SMOKE_OK'
